@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lynox · Reporte de Leads</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0c0d0e;--bg2:#131415;--card:#17191b;--card2:#1f2123;
+    --line:#282b2d;--line2:#363a3c;
+    --accent:#34d399;--accent2:#5eead4;--accent-soft:rgba(52,211,153,.10);
+    --text:#e9edec;--muted:#8a9492;--dim:#5e6866;
+    --good:#34d399;--warn:#e0b15e;--bad:#e57373;--gold:#cdb389;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+  ::selection{background:var(--accent-soft)}
+
+  /* ---- Header ---- */
+  header{padding:26px 38px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;background:linear-gradient(180deg,var(--bg2),var(--bg))}
+  .brand{display:flex;align-items:center;gap:16px}
+  .logo{font-size:30px;font-weight:600;letter-spacing:-1px;color:#fff;line-height:1}
+  .logo span{color:var(--accent)}
+  .brand .div{width:1px;height:34px;background:var(--line2)}
+  .brand h1{margin:0;font-size:15px;font-weight:500;color:var(--muted);letter-spacing:.3px}
+  .brand h1 b{color:var(--text);font-weight:600}
+  .hmeta{color:var(--dim);font-size:12px;text-align:right;line-height:1.6}
+  .hmeta .tag{display:inline-block;background:var(--accent-soft);color:var(--accent);padding:3px 11px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.5px}
+
+  /* ---- Tabs ---- */
+  .tabs{display:flex;gap:4px;padding:0 38px;border-bottom:1px solid var(--line);background:var(--bg2);flex-wrap:wrap}
+  .tab-btn{background:transparent;border:none;color:var(--muted);padding:15px 20px;cursor:pointer;font-size:13px;font-weight:600;letter-spacing:.4px;border-bottom:2px solid transparent;transition:all .15s;font-family:inherit}
+  .tab-btn:hover{color:var(--text)}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .tab-btn .c{display:inline-block;background:var(--card2);color:var(--muted);padding:1px 8px;border-radius:999px;font-size:10px;margin-left:7px;font-weight:600}
+  .tab-btn.active .c{background:var(--accent-soft);color:var(--accent)}
+
+  .container{padding:28px 38px 10px;display:grid;gap:22px;max-width:1500px;margin:0 auto}
+  .tab-content{display:none}
+  .tab-content.active{display:grid;gap:22px}
+
+  .sect{font-size:12px;color:var(--accent);margin:6px 0 -8px;text-transform:uppercase;letter-spacing:2px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .sect::before{content:'';width:14px;height:2px;background:var(--accent);display:inline-block}
+
+  .row{display:grid;gap:18px;grid-template-columns:1fr 1fr}
+  .row.full{grid-template-columns:1fr}
+  .row.three{grid-template-columns:repeat(3,1fr)}
+  .row.four{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:1050px){.row,.row.three,.row.four{grid-template-columns:1fr}}
+
+  .card{background:var(--card);padding:20px;border-radius:12px;border:1px solid var(--line)}
+  .card h3{margin:0 0 14px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+
+  .kpi{background:var(--card);padding:20px;border-radius:12px;border:1px solid var(--line);position:relative;overflow:hidden}
+  .kpi::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+  .kpi.green::after{background:var(--accent)}
+  .kpi.gold::after{background:var(--gold)}
+  .kpi.warn::after{background:var(--warn)}
+  .kpi.dim::after{background:var(--dim)}
+  .kpi h3{margin:0 0 10px}
+  .kpi .big{font-size:33px;font-weight:700;line-height:1;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+  .kpi .sub{color:var(--muted);font-size:12px;margin-top:6px;line-height:1.4}
+  .kpi .sub.up{color:var(--good)}
+  .kpi .sub.down{color:var(--bad)}
+
+  canvas{max-height:330px}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line)}
+  th{color:var(--dim);font-weight:600;text-transform:uppercase;font-size:10.5px;letter-spacing:.6px}
+  th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
+  tbody tr:hover td{background:var(--accent-soft)}
+  tbody tr:last-child td{border-bottom:none}
+  td b{font-weight:600}
+
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600}
+  .pill.good{background:rgba(52,211,153,.14);color:var(--accent)}
+  .pill.warn{background:rgba(224,177,94,.14);color:var(--warn)}
+  .pill.bad{background:rgba(229,115,115,.14);color:var(--bad)}
+  .pill.dim{background:rgba(95,122,110,.16);color:var(--muted)}
+
+  .note{padding:16px 18px;border-radius:10px;font-size:13px;line-height:1.65;border-left:3px solid var(--accent);background:var(--accent-soft)}
+  .note.warn{border-left-color:var(--warn);background:rgba(224,177,94,.07)}
+  .note.dim{border-left-color:var(--dim);background:rgba(95,122,110,.07)}
+  .note b{color:#fff}
+  .note .t{display:block;font-weight:700;margin-bottom:6px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;font-size:11px}
+  .note.warn .t{color:var(--warn)}
+
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  @media(max-width:1050px){.split{grid-template-columns:1fr}}
+  .split>div{padding:22px}
+  .split>div:first-child{border-right:1px solid var(--line)}
+  @media(max-width:1050px){.split>div:first-child{border-right:none;border-bottom:1px solid var(--line)}}
+  .split .acct{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:600}
+  .split .num{font-size:28px;font-weight:700;margin:8px 0 2px;letter-spacing:-.5px}
+  .split .desc{color:var(--muted);font-size:12.5px;line-height:1.6;margin-top:10px}
+  .split .chips{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .chip{background:var(--bg);border:1px solid var(--line);padding:6px 10px;border-radius:8px;font-size:11px}
+  .chip b{display:block;font-size:15px;margin-top:2px;font-weight:700}
+  .chip span{color:var(--dim)}
+
+  .refresh-bar{display:flex;align-items:center;gap:10px;margin-top:10px;justify-content:flex-end}
+  .rbtn{background:var(--accent);color:#06120d;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.3px;transition:filter .15s,opacity .15s;display:inline-flex;align-items:center;gap:6px}
+  .rbtn:hover{filter:brightness(1.08)}
+  .rbtn:disabled{opacity:.55;cursor:progress}
+  .rbtn.spin{animation:none}
+  .rbtn.loading::before{content:'';width:12px;height:12px;border:2px solid rgba(6,18,13,.3);border-top-color:#06120d;border-radius:50%;display:inline-block;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .gbtn{background:var(--card2);color:var(--muted);border:1px solid var(--line2);width:32px;height:32px;border-radius:8px;font-size:15px;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;justify-content:center}
+  .gbtn:hover{color:var(--accent);border-color:var(--accent)}
+  .rstatus{font-size:11px;color:var(--dim)}
+  .rstatus.ok{color:var(--accent)}
+  .rstatus.err{color:var(--bad)}
+  .rstatus.work{color:var(--gold)}
+  /* ---- Modal API ---- */
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(4,8,6,.78);z-index:100;align-items:center;justify-content:center;padding:20px}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--card);border:1px solid var(--line2);border-radius:14px;max-width:560px;width:100%;max-height:86vh;overflow:auto;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+  .modal-h{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line);font-weight:700;font-size:15px;color:var(--text)}
+  .modal-h .x{background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1}
+  .modal-h .x:hover{color:var(--bad)}
+  .modal-b{padding:20px 22px;font-size:13px;line-height:1.7;color:var(--text)}
+  .modal-b h4{margin:16px 0 6px;font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+  .modal-b h4:first-child{margin-top:0}
+  .modal-b code{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 7px;font-size:12px;color:var(--accent2);word-break:break-all;font-family:'Consolas',monospace}
+  .modal-b .kv{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px dashed var(--line)}
+  .modal-b .kv span{color:var(--muted)}
+  .modal-b .keybox{display:flex;align-items:center;gap:8px;margin-top:4px}
+  .modal-b .keybox button{background:var(--card2);border:1px solid var(--line2);color:var(--muted);border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer;font-family:inherit}
+  .modal-b .keybox button:hover{color:var(--accent)}
+  .modal-b .mnote{margin-top:16px;padding:12px 14px;border-radius:8px;background:var(--accent-soft);border-left:3px solid var(--accent);font-size:12px;color:var(--muted)}
+  .modal-b .mbtn{margin-top:16px;background:var(--accent);color:#06120d;border:none;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;width:100%}
+  footer{padding:26px 38px;color:var(--dim);font-size:11.5px;border-top:1px solid var(--line);margin-top:18px;text-align:center;line-height:1.7}
+  footer b{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo">lyn<span>o</span>x</div>
+    <div class="div"></div>
+    <h1>Reporte de <b>Leads</b> · Meta Ads</h1>
+  </div>
+  <div class="hmeta">
+    <span class="tag">CONSOLIDADO · 2 CUENTAS</span><br>
+    Financiera Linox + Lynox Soporte<br>
+    Lead = formulario instantáneo · Datos al <b id="dataDate" style="color:var(--muted)">16-jun-2026</b>
+    <div class="refresh-bar">
+      <button id="refreshBtn" class="rbtn">⟳ Actualizar datos</button>
+      <button id="gearBtn" class="gbtn" title="Ver conexión API">⚙</button>
+      <span id="refreshStatus" class="rstatus">Listo · datos embebidos</span>
+    </div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="resumen">Resumen</button>
+  <button class="tab-btn" data-tab="mayo">Mayo 2026 <span class="c">31 d</span></button>
+  <button class="tab-btn" data-tab="junio">Junio 2026 <span class="c">16 d</span></button>
+  <button class="tab-btn" data-tab="pilotos">Pilotos · Mensajes</button>
+</div>
+
+<div class="container">
+
+<!-- ============================ RESUMEN ============================ -->
+<div class="tab-content active" id="tab-resumen">
+
+  <div class="sect">Operación de Lead-Gen · Formularios (motor principal)</div>
+  <div class="row four">
+    <div class="kpi green">
+      <h3>Inversión</h3>
+      <div class="big" id="r-spend">$13,567</div>
+      <div class="sub" id="r-spend-sub">MXN · campaña PrimerToque Finanzas · 47 días activos</div>
+    </div>
+    <div class="kpi green">
+      <h3>Leads (formularios)</h3>
+      <div class="big" id="r-leads">655</div>
+      <div class="sub">~14/día · escalando sostenido</div>
+    </div>
+    <div class="kpi gold">
+      <h3>CPL global</h3>
+      <div class="big" id="r-cpl">$20.71</div>
+      <div class="sub up">Mejor día $12.43 · estable bajo $21</div>
+    </div>
+    <div class="kpi green">
+      <h3>CTR · Frecuencia</h3>
+      <div class="big" id="r-ctr">4.47%</div>
+      <div class="sub" id="r-ctr-sub">53,544 impr · 2,395 clicks · freq 2.4</div>
+    </div>
+  </div>
+
+  <div class="sect">Las dos cuentas · qué hace cada una</div>
+  <div class="split">
+    <div>
+      <div class="acct">⬡ Financiera Linox · 2089804974913407</div>
+      <div class="num" style="color:var(--accent)" id="r-fin-num">655 leads · CPL $20.71</div>
+      <div class="desc">Cuenta principal. Corre la campaña <b>PrimerToque Finanzas</b> con <b>formularios instantáneos</b> (Lead Forms). Es el 90% de la inversión y el 100% de los leads de formulario. Activa y escalando.</div>
+      <div class="chips">
+        <div class="chip"><span>Inversión</span><b id="r-fin-spend">$13,567</b></div>
+        <div class="chip"><span>Formato</span><b>Lead Form</b></div>
+        <div class="chip"><span>Estado</span><b style="color:var(--accent)">Activa</b></div>
+      </div>
+    </div>
+    <div>
+      <div class="acct">⬡ Lynox Soporte · 960611653100333</div>
+      <div class="num" style="color:var(--muted)">53 mensajes · piloto</div>
+      <div class="desc">Cuenta secundaria. Probó <b>conversaciones por mensaje</b> (Click-to-Message) en un burst de 6 días (22-27 abr). Buen aprendizaje, pero <b>se discontinuó</b> a favor de formularios, que escalan mejor y a menor costo.</div>
+      <div class="chips">
+        <div class="chip"><span>Inversión</span><b>$1,673</b></div>
+        <div class="chip"><span>Formato</span><b>Mensajes</b></div>
+        <div class="chip"><span>Estado</span><b style="color:var(--muted)">Piloto cerrado</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect">Evolución diaria · 29 abr → 16 jun</div>
+  <div class="row full">
+    <div class="card"><h3>Inversión y leads por día · campaña de formularios</h3><canvas id="evoChart"></canvas></div>
+  </div>
+  <div class="row full">
+    <div class="card"><h3>CPL por día (línea verde = promedio $20.71)</h3><canvas id="cplChart"></canvas></div>
+  </div>
+
+  <div class="sect">Mayo vs Junio · está escalando sin perder eficiencia</div>
+  <div class="row three">
+    <div class="kpi green">
+      <h3>Leads · mismo período (1-16)</h3>
+      <div class="big" style="font-size:26px" id="r-cmp-leads">202 → 236</div>
+      <div class="sub up">+17% más leads en junio</div>
+    </div>
+    <div class="kpi gold">
+      <h3>CPL · mismo período (1-16)</h3>
+      <div class="big" style="font-size:26px" id="r-cmp-cpl">$20.31 → $20.26</div>
+      <div class="sub up">Plano (-0.2%) pese a más volumen</div>
+    </div>
+    <div class="kpi green">
+      <h3>Proyección cierre junio</h3>
+      <div class="big" style="font-size:26px" id="r-proj">~442 leads</div>
+      <div class="sub" id="r-proj-sub">a este ritmo · ~$8,966 · CPL ~$20.3</div>
+    </div>
+  </div>
+
+  <div class="note">
+    <span class="t">Lectura ejecutiva</span>
+    Lynox tiene una operación de lead-gen <b>madura y predecible</b>: 655 leads acumulados a <b>CPL $20.71</b>, sin un solo mes fuera de control. La decisión de migrar de mensajes (piloto, ~$28/conversación) a <b>formularios instantáneos ($20.71/lead)</b> fue acertada — mismo presupuesto, ~35% más barato por contacto y mucho más escalable. Junio confirma la tendencia: <b>+17% de volumen con el CPL plano</b> y CTR subiendo a 4.75%. La palanca de crecimiento ahora es presupuesto, no eficiencia: el costo por lead ya está domado.
+  </div>
+
+</div>
+
+<!-- ============================ MAYO ============================ -->
+<div class="tab-content" id="tab-mayo">
+  <div class="sect">KPIs Mayo 2026 · mes cerrado (formularios)</div>
+  <div class="row four">
+    <div class="kpi green"><h3>Inversión</h3><div class="big" id="m-spend">$8,561</div><div class="sub" id="m-spend-sub">$276/día promedio</div></div>
+    <div class="kpi green"><h3>Leads</h3><div class="big" id="m-leads">408</div><div class="sub" id="m-leads-sub">13.2/día promedio</div></div>
+    <div class="kpi gold"><h3>CPL</h3><div class="big" id="m-cpl">$20.98</div><div class="sub">Mejor $12.43 (2-may) · peor $38 (7-may)</div></div>
+    <div class="kpi green"><h3>CTR</h3><div class="big" id="m-ctr">4.36%</div><div class="sub" id="m-ctr-sub">33,825 impr · 1,475 clicks</div></div>
+  </div>
+
+  <div class="sect">Evolución diaria · Mayo</div>
+  <div class="row full"><div class="card"><h3>Inversión y leads por día</h3><canvas id="mayChart"></canvas></div></div>
+
+  <div class="row">
+    <div class="card" style="background:rgba(52,211,153,.05);border-left:3px solid var(--good)">
+      <h3 style="color:var(--accent)">Mejores días (CPL)</h3>
+      <table>
+        <thead><tr><th>Fecha</th><th class="num">Leads</th><th class="num">Inv.</th><th class="num">CPL</th></tr></thead>
+        <tbody>
+          <tr><td>2 may</td><td class="num">10</td><td class="num">$124</td><td class="num"><span class="pill good">$12.43</span></td></tr>
+          <tr><td>1 may</td><td class="num">13</td><td class="num">$177</td><td class="num"><span class="pill good">$13.59</span></td></tr>
+          <tr><td>30 may</td><td class="num">15</td><td class="num">$215</td><td class="num"><span class="pill good">$14.36</span></td></tr>
+          <tr><td>16 may</td><td class="num">13</td><td class="num">$188</td><td class="num"><span class="pill good">$14.48</span></td></tr>
+          <tr><td>4 may</td><td class="num">11</td><td class="num">$164</td><td class="num"><span class="pill good">$14.89</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card" style="background:rgba(229,115,115,.04);border-left:3px solid var(--bad)">
+      <h3 style="color:var(--bad)">Días a vigilar (CPL)</h3>
+      <table>
+        <thead><tr><th>Fecha</th><th class="num">Leads</th><th class="num">Inv.</th><th class="num">CPL</th></tr></thead>
+        <tbody>
+          <tr><td>7 may</td><td class="num">6</td><td class="num">$228</td><td class="num"><span class="pill bad">$38.00</span></td></tr>
+          <tr><td>5 may</td><td class="num">11</td><td class="num">$302</td><td class="num"><span class="pill warn">$27.47</span></td></tr>
+          <tr><td>23 may</td><td class="num">19</td><td class="num">$515</td><td class="num"><span class="pill warn">$27.12</span></td></tr>
+          <tr><td>15 may</td><td class="num">17</td><td class="num">$284</td><td class="num"><span class="pill warn">$16.73</span></td></tr>
+          <tr><td>21 may</td><td class="num">29</td><td class="num">$500</td><td class="num"><span class="pill good">$17.26</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sect">Tabla diaria · Mayo</div>
+  <div class="card">
+    <table id="mayTable">
+      <thead><tr><th>Fecha</th><th class="num">Inversión</th><th class="num">Leads</th><th class="num">CPL</th><th class="num">Impr.</th><th class="num">Clicks</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================ JUNIO ============================ -->
+<div class="tab-content" id="tab-junio">
+  <div class="sect">KPIs Junio 2026 · parcial (1-16)</div>
+  <div class="row four">
+    <div class="kpi green"><h3>Inversión</h3><div class="big" id="j-spend">$4,782</div><div class="sub" id="j-spend-sub">$299/día · al corte</div></div>
+    <div class="kpi green"><h3>Leads</h3><div class="big" id="j-leads">236</div><div class="sub" id="j-leads-sub">14.8/día promedio</div></div>
+    <div class="kpi gold"><h3>CPL</h3><div class="big" id="j-cpl">$20.26</div><div class="sub up" id="j-cpl-sub">-3.4% vs mayo ($20.98)</div></div>
+    <div class="kpi green"><h3>CTR</h3><div class="big" id="j-ctr">4.75%</div><div class="sub" id="j-ctr-sub">Mejor del histórico · 18,654 impr</div></div>
+  </div>
+
+  <div class="sect">Evolución diaria · Junio</div>
+  <div class="row full"><div class="card"><h3>Inversión y leads por día</h3><canvas id="junChart"></canvas></div></div>
+  <div class="row full"><div class="card"><h3>CPL vs Leads por día (barra = leads · línea = CPL)</h3><canvas id="junCplLeads"></canvas></div></div>
+
+  <div class="sect">Comparativa mismo período · Mayo 1-16 vs Junio 1-16</div>
+  <div class="row three">
+    <div class="kpi green"><h3>Leads</h3><div class="big" style="font-size:26px" id="j-cmp-leads">202 → 236</div><div class="sub up" id="j-cmp-leads-sub">+34 leads (+17%)</div></div>
+    <div class="kpi gold"><h3>CPL</h3><div class="big" style="font-size:26px" id="j-cmp-cpl">$20.31 → $20.26</div><div class="sub up">Plano · escala limpia</div></div>
+    <div class="kpi green"><h3>Inversión</h3><div class="big" style="font-size:26px" id="j-cmp-spend">$4,102 → $4,782</div><div class="sub" id="j-cmp-spend-sub">+$680 (+17%)</div></div>
+  </div>
+
+  <div class="note">
+    <span class="t">Proyección de cierre</span>
+    A ritmo actual junio cierra en <b>~442 leads / ~$8,966 / CPL ~$20.3</b>. Sería el mejor mes en volumen manteniendo el costo. Recomendación: como el CPL está domado y junio mejora el CTR, <b>hay espacio para subir presupuesto +15-20%</b> sin riesgo de inflar el costo — el cuello de botella es inversión, no eficiencia.
+  </div>
+
+  <div class="sect">Leads por edad y género · Junio</div>
+  <div class="row">
+    <div class="card"><h3>Leads por rango de edad y género</h3><canvas id="ageGenderChart"></canvas></div>
+    <div class="card">
+      <h3>Eficiencia por edad (CPL)</h3>
+      <table>
+        <thead><tr><th>Edad</th><th class="num">Leads</th><th class="num">Share</th><th class="num">CPL</th></tr></thead>
+        <tbody id="ageTable">
+          <tr><td><b>65+</b></td><td class="num"><b>129</b></td><td class="num">55%</td><td class="num"><span class="pill good">$14.65</span></td></tr>
+          <tr><td>55-64</td><td class="num">54</td><td class="num">23%</td><td class="num"><span class="pill good">$21.09</span></td></tr>
+          <tr><td>25-34</td><td class="num">20</td><td class="num">8%</td><td class="num"><span class="pill good">$17.24</span></td></tr>
+          <tr><td>45-54</td><td class="num">16</td><td class="num">7%</td><td class="num"><span class="pill bad">$50.83</span></td></tr>
+          <tr><td>35-44</td><td class="num">14</td><td class="num">6%</td><td class="num"><span class="pill warn">$36.63</span></td></tr>
+          <tr><td>18-24</td><td class="num">3</td><td class="num">1%</td><td class="num"><span class="pill warn">$27.43</span></td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px;font-size:12px;color:var(--muted);line-height:1.5" id="genderNote">Por género: <b style="color:var(--text)">Hombres 157 leads</b> (CPL $22.52) · <b style="color:var(--text)">Mujeres 77 leads</b> (CPL $15.48). Las mujeres convierten más barato; el volumen está en hombres 65+.</div>
+    </div>
+  </div>
+  <div class="note">
+    <span class="t">El perfil del lead de Lynox</span>
+    <b>78% de los leads son 55+ años</b> — el segmento <b>pensionados</b>. El mejor combo volumen-costo es <b>65+</b> (129 leads, 55% del total, CPL $14.65, el más barato). El segmento <b>45-54 es el más caro</b> ($50.83) y de bajo volumen — candidato a recortar presupuesto y reasignar a 55+. El target PYMES (edades productivas 25-44) aporta poco volumen; si es prioridad estratégica, necesita creativo/segmentación propia.
+  </div>
+
+  <div class="sect">Leads por región · Junio (32 estados)</div>
+  <div class="row">
+    <div class="card"><h3>Top estados por volumen de leads</h3><canvas id="regionChart"></canvas></div>
+    <div class="card">
+      <h3>Distribución geográfica</h3>
+      <table>
+        <thead><tr><th>Estado</th><th class="num">Leads</th><th class="num">Share</th></tr></thead>
+        <tbody id="regionTable"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="note dim">
+    <span class="t" style="color:var(--muted)">Nota metodológica</span>
+    La concentración nacional es sana: <b>CDMX (22), Veracruz (19), Edo. Méx (15) y Sonora (15)</b> lideran, pero ningún estado pasa del 10% — la demanda está repartida en los 32 estados. <i>El CPL por región no se muestra porque Meta solo atribuye una fracción del gasto al desglose geográfico (sería artificialmente bajo); los conteos de leads sí son exactos y suman 236.</i>
+  </div>
+
+  <details class="card" style="padding:0">
+    <summary style="padding:18px 20px;cursor:pointer;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center">
+      <span>Tabla diaria · Junio (clic para desplegar)</span>
+      <span style="color:var(--accent)">▾</span>
+    </summary>
+    <div style="padding:0 20px 18px">
+      <table id="junTable">
+        <thead><tr><th>Fecha</th><th class="num">Inversión</th><th class="num">Leads</th><th class="num">CPL</th><th class="num">Impr.</th><th class="num">Clicks</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </details>
+</div>
+
+<!-- ============================ PILOTOS ============================ -->
+<div class="tab-content" id="tab-pilotos">
+  <div class="sect">Pilotos de mensajería · histórico (abril)</div>
+  <div class="note dim">
+    <span class="t" style="color:var(--muted)">Contexto</span>
+    Antes de estandarizar formularios, Lynox probó <b>conversaciones por mensaje</b> (Click-to-Message) en abril, repartidas en dos cuentas. Funcionaron, pero a un costo por contacto más alto (~$28 vs $20.71 del formulario) y con menor capacidad de escala. Se cerraron y la inversión se concentró en la campaña de formularios. Se documentan aquí como base de aprendizaje.
+  </div>
+
+  <div class="row three">
+    <div class="kpi dim"><h3>Mensajes totales (piloto)</h3><div class="big">89</div><div class="sub">vs 655 leads de formulario</div></div>
+    <div class="kpi dim"><h3>Inversión en pilotos</h3><div class="big">$2,496</div><div class="sub">15% del total invertido</div></div>
+    <div class="kpi warn"><h3>Costo por mensaje</h3><div class="big">$28.04</div><div class="sub down">+35% vs CPL de formulario</div></div>
+  </div>
+
+  <div class="sect">Detalle por campaña piloto</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Campaña</th><th>Cuenta</th><th class="num">Inversión</th><th class="num">Mensajes</th><th class="num">Costo/msg</th><th class="num">CTR</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td><b>Campañas de Finanzas</b></td><td>Lynox Soporte</td><td class="num">$1,673</td><td class="num">53</td><td class="num"><span class="pill warn">$31.57</span></td><td class="num">3.89%</td><td><span class="pill dim">Cerrada (22-27 abr)</span></td></tr>
+        <tr><td>Campaña Piloto · Público/Segmento/H+F/Edad/Región</td><td>Financiera Linox</td><td class="num">$774</td><td class="num">34</td><td class="num"><span class="pill good">$22.77</span></td><td class="num">4.76%</td><td><span class="pill dim">Cerrada (abr)</span></td></tr>
+        <tr><td>Campaña Piloto · Copia</td><td>Financiera Linox</td><td class="num">$48</td><td class="num">2</td><td class="num">$24.24</td><td class="num">4.47%</td><td><span class="pill dim">Cerrada (abr)</span></td></tr>
+        <tr style="background:var(--accent-soft)"><td colspan="2"><b>Total formularios (referencia)</b></td><td class="num"><b>$13,567</b></td><td class="num"><b>655</b></td><td class="num"><span class="pill good">$20.71</span></td><td class="num">4.47%</td><td><span class="pill good">Activa</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sect">Gran total consolidado · histórico completo</div>
+  <div class="row three">
+    <div class="kpi green"><h3>Inversión total</h3><div class="big">$16,062</div><div class="sub">Formularios + pilotos · 2 cuentas</div></div>
+    <div class="kpi green"><h3>Contactos generados</h3><div class="big">744</div><div class="sub">655 leads + 89 mensajes</div></div>
+    <div class="kpi gold"><h3>Costo promedio/contacto</h3><div class="big">$21.59</div><div class="sub">ponderado · arrastrado por pilotos</div></div>
+  </div>
+</div>
+
+</div>
+
+<div id="apiModal" class="modal-bg">
+  <div class="modal">
+    <div class="modal-h"><span>⚙ Conexión Windsor.ai</span><button id="apiClose" class="x" title="Cerrar">✕</button></div>
+    <div class="modal-b">
+      <h4>Cómo se actualiza</h4>
+      El botón <b>⟳ Actualizar datos</b> pide los datos a una <b>función segura de Netlify</b>, que consulta Windsor.ai y los devuelve. Recalcula KPIs, gráficas, tablas y desgloses. Responde en vivo, así que la primera carga del día puede tardar (si falla, dale clic otra vez).
+
+      <h4>Endpoint</h4>
+      <code>/.netlify/functions/windsor → connectors.windsor.ai/facebook</code>
+
+      <h4>Parámetros</h4>
+      <div class="kv"><span>Conector</span><b>facebook (Meta Ads)</b></div>
+      <div class="kv"><span>Cuenta</span><b>Financiera Linox · 2089804974913407</b></div>
+      <div class="kv"><span>Rango histórico</span><b>últimos 90 días</b></div>
+      <div class="kv"><span>Métricas</span><b>spend · actions_lead · impressions · clicks</b></div>
+      <div class="kv"><span>Desgloses</span><b>edad · género · región (mes en curso)</b></div>
+
+      <h4>API key</h4>
+      <div class="kv"><span>Estado</span><b style="color:var(--accent)">🔒 Protegida en el servidor</b></div>
+
+      <div class="mnote">La API key <b>no está en este sitio</b>: vive en una variable de entorno de Netlify (lado servidor) y nunca llega al navegador ni al repositorio. El botón funciona a través de ese proxy seguro.</div>
+      <button class="mbtn" id="modalRefresh">⟳ Actualizar ahora</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <b>Lynox</b> · Financiera tecnológica impulsada por IA · Préstamos a PYMES y Pensionados<br>
+  Dashboard de leads consolidado · Fuente: Meta Ads vía Windsor.ai · Cuentas 2089804974913407 (Financiera Linox) + 960611653100333 (Lynox Soporte)<br>
+  Generado 17-jun-2026 · Lead = formulario instantáneo (Lead Form) · Piloto = conversación por mensaje
+</footer>
+
+<script>
+// ===================== CONFIG =====================
+const PROXY='/.netlify/functions/windsor';   // proxy seguro · la API key vive en Netlify, no en este archivo
+const ACCT_FIN='2089804974913407';                          // Financiera Linox (Lead Forms)
+const MAY='2026-05', CUR='2026-06';                         // mes cerrado / mes en curso
+const G='#34d399', Gdim='rgba(52,211,153,.22)', GOLD='#cdb389', GRID='rgba(255,255,255,.06)', MUT='#8a9492';
+const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const AGES=['18-24','25-34','35-44','45-54','55-64','65+'];
+const RMAP={'State of Mexico':'Edo. de México','Coahuila de Zaragoza':'Coahuila','Michoacán de Ocampo':'Michoacán','Querétaro Arteaga':'Querétaro','Distrito Federal':'Ciudad de México'};
+Chart.defaults.color=MUT; Chart.defaults.font.family="'Segoe UI',system-ui,sans-serif"; Chart.defaults.font.size=11;
+
+// ===================== DATOS EMBEBIDOS (primer pintado / fallback) =====================
+// daily: [isoDate, spend, leads, impresiones, clicks]
+const SEED={
+  daily:[
+   ['2026-04-29',120.72,7,491,21],['2026-04-30',102.72,4,574,13],
+   ['2026-05-01',176.70,13,938,51],['2026-05-02',124.31,10,766,30],['2026-05-03',163.10,7,1095,32],['2026-05-04',163.79,11,901,33],['2026-05-05',302.20,11,1195,40],['2026-05-06',368.79,17,1281,60],['2026-05-07',227.98,6,968,28],['2026-05-08',255.98,12,902,36],['2026-05-09',223.97,10,662,36],['2026-05-10',351.21,18,1021,57],['2026-05-11',308.36,14,910,44],['2026-05-12',377.44,16,1407,60],['2026-05-13',296.25,14,1230,50],['2026-05-14',288.93,13,1075,47],['2026-05-15',284.46,17,939,48],['2026-05-16',188.22,13,728,40],['2026-05-17',31.91,0,99,2],['2026-05-20',393.54,16,1465,66],['2026-05-21',500.40,29,1989,105],['2026-05-22',501.37,22,2251,86],['2026-05-23',515.26,19,2389,92],['2026-05-24',349.62,15,1180,51],['2026-05-25',334.57,17,1300,52],['2026-05-26',350.60,15,1542,57],['2026-05-27',325.44,13,1321,53],['2026-05-28',268.61,17,1002,57],['2026-05-29',249.54,11,935,42],['2026-05-30',215.43,15,775,45],['2026-05-31',423.26,17,1559,75],
+   ['2026-06-01',301.18,14,1439,58],['2026-06-02',301.54,19,1182,59],['2026-06-03',312.23,15,1269,66],['2026-06-04',280.44,9,1025,34],['2026-06-05',290.52,12,1138,49],['2026-06-06',188.01,7,1048,34],['2026-06-07',429.21,23,1533,81],['2026-06-08',265.41,14,1068,62],['2026-06-09',341.71,20,1210,77],['2026-06-10',285.02,12,1076,45],['2026-06-11',304.06,13,1124,45],['2026-06-12',268.41,12,1089,36],['2026-06-13',204.84,13,904,51],['2026-06-14',370.97,18,1276,57],['2026-06-15',320.32,17,1117,68],['2026-06-16',318.11,18,1156,64]
+  ],
+  age:{ // mes en curso · orden AGES
+    male:[3,13,10,13,30,88], female:[0,7,4,3,23,40],
+    leads:[3,20,14,16,54,129], spend:[82.28,344.83,512.79,813.34,1138.71,1890.36],
+    gM:{leads:157,spend:3535.32}, gF:{leads:77,spend:1191.77}
+  },
+  region:[['Ciudad de México',22],['Veracruz',19],['Edo. de México',15],['Sonora',15],['Coahuila',14],['Nuevo León',11],['Michoacán',10],['Sinaloa',10],['Tamaulipas',10],['Yucatán',10],['Baja California',9],['Chihuahua',9],['Chiapas',8],['Puebla',7],['Guanajuato',6],['Guerrero',6],['Oaxaca',6],['Jalisco',6],['Quintana Roo',5],['Zacatecas',5],['San Luis Potosi',4],['Nayarit',4],['Durango',4],['Morelos',4],['Querétaro',4],['Colima',3],['Baja California Sur',3],['Aguascalientes',2],['Campeche',2],['Hidalgo',2],['Tabasco',1]]
+};
+let DATA=SEED;
+
+// ===================== HELPERS =====================
+const $=id=>document.getElementById(id);
+const set=(id,v)=>{const e=$(id); if(e)e.textContent=v;};
+const money=n=>'$'+Math.round(n).toLocaleString('en-US');
+const num=n=>Math.round(n).toLocaleString('en-US');
+const dShort=iso=>{const p=iso.split('-');return (+p[2])+' '+MES[+p[1]-1];};
+const dim=ym=>{const p=ym.split('-');return new Date(+p[0],+p[1],0).getDate();};
+function agg(rows){let s=0,l=0,i=0,c=0;rows.forEach(r=>{s+=r[1];l+=r[2];i+=r[3];c+=r[4];});return{spend:s,leads:l,impr:i,clicks:c,cpl:l?s/l:0,ctr:i?c/i*100:0};}
+const monthRows=(d,ym)=>d.filter(r=>r[0].slice(0,7)===ym);
+const upto16=rows=>rows.filter(r=>+r[0].slice(8,10)<=16);
+const CH={};
+function mk(id,cfg){const el=$(id); if(!el)return; if(CH[id])CH[id].destroy(); CH[id]=new Chart(el,cfg);}
+
+// ===================== RENDER =====================
+function comboChart(id,rows){
+  mk(id,{data:{labels:rows.map(r=>dShort(r[0])),datasets:[
+      {type:'bar',label:'Inversión $',data:rows.map(r=>r[1]),backgroundColor:Gdim,borderColor:G,borderWidth:1,yAxisID:'y',borderRadius:3,order:2},
+      {type:'line',label:'Leads',data:rows.map(r=>r[2]),borderColor:GOLD,backgroundColor:GOLD,tension:.35,yAxisID:'y1',pointRadius:2.5,borderWidth:2,order:1}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{usePointStyle:true,boxWidth:8}}},
+      scales:{y:{position:'left',grid:{color:GRID},title:{display:true,text:'Inversión (MXN)'}},
+        y1:{position:'right',grid:{display:false},title:{display:true,text:'Leads'}},
+        x:{grid:{display:false},ticks:{maxRotation:60,minRotation:60,autoSkip:true,maxTicksLimit:24}}}}});
+}
+function fillTable(id,rows){
+  const tb=document.querySelector('#'+id+' tbody'); if(!tb)return; tb.innerHTML='';
+  rows.forEach(r=>{const c=r[2]>0?'$'+(r[1]/r[2]).toFixed(2):'—';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${dShort(r[0])}</td><td class="num">${money(r[1])}</td><td class="num"><b>${r[2]}</b></td><td class="num">${c}</td><td class="num">${num(r[3])}</td><td class="num">${r[4]}</td>`;
+    tb.appendChild(tr);});
+}
+function renderDaily(d){
+  const t=agg(d), may=monthRows(d,MAY), jun=monthRows(d,CUR), mA=agg(may), jA=agg(jun);
+  // Resumen
+  set('r-spend',money(t.spend)); set('r-leads',num(t.leads)); set('r-cpl','$'+t.cpl.toFixed(2)); set('r-ctr',t.ctr.toFixed(2)+'%');
+  set('r-spend-sub','MXN · campaña PrimerToque Finanzas · '+d.length+' días activos');
+  set('r-ctr-sub',num(t.impr)+' impr · '+num(t.clicks)+' clicks');
+  set('r-fin-num',num(t.leads)+' leads · CPL $'+t.cpl.toFixed(2)); set('r-fin-spend',money(t.spend));
+  // Mayo
+  set('m-spend',money(mA.spend)); set('m-leads',num(mA.leads)); set('m-cpl','$'+mA.cpl.toFixed(2)); set('m-ctr',mA.ctr.toFixed(2)+'%');
+  set('m-spend-sub',money(mA.spend/(may.length||1))+'/día promedio'); set('m-leads-sub',(mA.leads/(may.length||1)).toFixed(1)+'/día promedio');
+  set('m-ctr-sub',num(mA.impr)+' impr · '+num(mA.clicks)+' clicks');
+  // Junio
+  const jMax=Math.max(...jun.map(r=>+r[0].slice(8,10)),1);
+  set('j-spend',money(jA.spend)); set('j-leads',num(jA.leads)); set('j-cpl','$'+jA.cpl.toFixed(2)); set('j-ctr',jA.ctr.toFixed(2)+'%');
+  set('j-spend-sub',money(jA.spend/(jun.length||1))+'/día · al corte ('+jMax+' días)');
+  set('j-leads-sub',(jA.leads/(jun.length||1)).toFixed(1)+'/día promedio');
+  const dcpl=mA.cpl?((jA.cpl-mA.cpl)/mA.cpl*100):0;
+  set('j-cpl-sub',(dcpl<=0?'':'+')+dcpl.toFixed(1)+'% vs mayo ($'+mA.cpl.toFixed(2)+')');
+  set('j-ctr-sub',num(jA.impr)+' impr · '+num(jA.clicks)+' clicks');
+  // Charts
+  comboChart('evoChart',d); comboChart('mayChart',may); comboChart('junChart',jun);
+  mk('cplChart',{type:'line',data:{labels:d.map(r=>dShort(r[0])),datasets:[
+      {label:'CPL diario',data:d.map(r=>r[2]>0?+(r[1]/r[2]).toFixed(2):null),borderColor:G,backgroundColor:Gdim,fill:true,tension:.35,pointRadius:2,borderWidth:2,spanGaps:true},
+      {label:'Promedio $'+t.cpl.toFixed(2),data:d.map(()=>+t.cpl.toFixed(2)),borderColor:GOLD,borderDash:[6,4],pointRadius:0,borderWidth:1.5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{usePointStyle:true,boxWidth:8}}},
+      scales:{y:{grid:{color:GRID},title:{display:true,text:'CPL (MXN)'},suggestedMax:42},
+        x:{grid:{display:false},ticks:{maxRotation:60,minRotation:60,autoSkip:true,maxTicksLimit:24}}}}});
+  mk('junCplLeads',{data:{labels:jun.map(r=>dShort(r[0])),datasets:[
+      {type:'bar',label:'Leads',data:jun.map(r=>r[2]),backgroundColor:Gdim,borderColor:G,borderWidth:1,borderRadius:3,yAxisID:'y',order:2},
+      {type:'line',label:'CPL $',data:jun.map(r=>r[2]>0?+(r[1]/r[2]).toFixed(2):null),borderColor:GOLD,backgroundColor:GOLD,tension:.35,pointRadius:3,borderWidth:2,yAxisID:'y1',order:1,spanGaps:true}]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{usePointStyle:true,boxWidth:8}}},
+      scales:{y:{position:'left',grid:{color:GRID},title:{display:true,text:'Leads'},beginAtZero:true},
+        y1:{position:'right',grid:{display:false},title:{display:true,text:'CPL (MXN)'},beginAtZero:true},x:{grid:{display:false}}}}});
+  // Tablas
+  fillTable('mayTable',may); fillTable('junTable',jun);
+  // Comparativa 1-16
+  const m16=agg(upto16(may)), j16=agg(upto16(jun));
+  const dl=j16.leads-m16.leads, plt=m16.leads?(dl/m16.leads*100):0;
+  const ds=j16.spend-m16.spend, pst=m16.spend?(ds/m16.spend*100):0;
+  set('r-cmp-leads',m16.leads+' → '+j16.leads); set('r-cmp-cpl','$'+m16.cpl.toFixed(2)+' → $'+j16.cpl.toFixed(2));
+  set('j-cmp-leads',m16.leads+' → '+j16.leads); set('j-cmp-cpl','$'+m16.cpl.toFixed(2)+' → $'+j16.cpl.toFixed(2));
+  set('j-cmp-spend',money(m16.spend)+' → '+money(j16.spend));
+  set('j-cmp-leads-sub',(dl>=0?'+':'')+dl+' leads ('+(plt>=0?'+':'')+plt.toFixed(0)+'%)');
+  set('j-cmp-spend-sub',(ds>=0?'+':'')+money(ds)+' ('+(pst>=0?'+':'')+pst.toFixed(0)+'%)');
+  // Proyección cierre mes en curso
+  const D=dim(CUR), pL=Math.round(jA.leads/jMax*D), pS=Math.round(jA.spend/jMax*D);
+  set('r-proj','~'+num(pL)+' leads'); set('r-proj-sub','a este ritmo · ~'+money(pS)+' · CPL ~$'+(pS/pL).toFixed(2));
+}
+function renderAge(a){
+  mk('ageGenderChart',{type:'bar',data:{labels:AGES,datasets:[
+      {label:'Hombres',data:a.male,backgroundColor:G,borderRadius:3},
+      {label:'Mujeres',data:a.female,backgroundColor:GOLD,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{usePointStyle:true,boxWidth:8}}},
+      scales:{x:{stacked:true,grid:{display:false},title:{display:true,text:'Rango de edad'}},
+        y:{stacked:true,grid:{color:GRID},title:{display:true,text:'Leads'}}}}});
+  const total=a.leads.reduce((x,y)=>x+y,0)||1;
+  const rows=AGES.map((g,i)=>({g,leads:a.leads[i],cpl:a.leads[i]?a.spend[i]/a.leads[i]:0,share:a.leads[i]/total*100})).sort((x,y)=>y.leads-x.leads);
+  const tb=$('ageTable'); if(tb){tb.innerHTML=''; rows.forEach(r=>{
+    const cls=r.cpl<=25?'good':r.cpl<=40?'warn':'bad';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><b>${r.g}</b></td><td class="num"><b>${r.leads}</b></td><td class="num">${r.share.toFixed(0)}%</td><td class="num"><span class="pill ${cls}">$${r.cpl.toFixed(2)}</span></td>`;
+    tb.appendChild(tr);});}
+  const note=$('genderNote');
+  if(note)note.innerHTML=`Por género: <b style="color:var(--text)">Hombres ${a.gM.leads} leads</b> (CPL $${(a.gM.spend/a.gM.leads).toFixed(2)}) · <b style="color:var(--text)">Mujeres ${a.gF.leads} leads</b> (CPL $${(a.gF.spend/a.gF.leads).toFixed(2)}). El volumen se concentra en mayores; las mujeres suelen convertir más barato.`;
+}
+function renderRegion(reg){
+  const total=reg.reduce((s,r)=>s+r[1],0)||1;
+  const chartTop=reg.slice(0,15), restC=reg.slice(15).reduce((s,r)=>s+r[1],0);
+  const cl=chartTop.map(r=>[r[0],r[1]]); if(restC>0)cl.push(['Otros ('+(reg.length-15)+' estados)',restC]);
+  mk('regionChart',{type:'bar',data:{labels:cl.map(r=>r[0]),datasets:[{label:'Leads',data:cl.map(r=>r[1]),backgroundColor:Gdim,borderColor:G,borderWidth:1,borderRadius:3}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:GRID},title:{display:true,text:'Leads'}},y:{grid:{display:false}}}}});
+  const tabTop=reg.slice(0,20), restT=reg.slice(20).reduce((s,r)=>s+r[1],0);
+  const tl=tabTop.map(r=>[r[0],r[1]]); if(restT>0)tl.push(['Otros ('+(reg.length-20)+' estados)',restT]);
+  const tb=$('regionTable'); if(tb){tb.innerHTML=''; tl.forEach(r=>{const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${r[0]}</td><td class="num"><b>${r[1]}</b></td><td class="num">${(r[1]/total*100).toFixed(0)}%</td>`;tb.appendChild(tr);});}
+}
+function renderAll(){renderDaily(DATA.daily); renderAge(DATA.age); renderRegion(DATA.region);}
+
+// ===================== FETCH WINDSOR (en vivo) =====================
+async function fetchJSON(url,ms=120000){
+  const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),ms);
+  try{
+    const r=await fetch(url,{cache:'no-store',signal:ctrl.signal});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    if(!j.data) throw new Error('respuesta sin datos');
+    return j.data;
+  }catch(e){
+    if(e.name==='AbortError') throw new Error('tiempo agotado (>'+Math.round(ms/1000)+'s) · Windsor tardó demasiado, reintenta');
+    throw e;
+  }finally{ clearTimeout(t); }
+}
+const N=v=>{const x=parseFloat(v); return isNaN(x)?0:x;};
+function buildDaily(rows){
+  let r=rows.filter(x=>String(x.account_id)===ACCT_FIN && /primertoque/i.test(x.campaign||''));
+  if(!r.length) r=rows.filter(x=>String(x.account_id)===ACCT_FIN && !/piloto/i.test(x.campaign||''));
+  const by={};
+  r.forEach(x=>{const d=String(x.date).slice(0,10); if(!by[d])by[d]=[d,0,0,0,0];
+    by[d][1]+=N(x.spend); by[d][2]+=N(x.actions_lead); by[d][3]+=N(x.impressions); by[d][4]+=N(x.clicks);});
+  return Object.values(by).map(a=>[a[0],+a[1].toFixed(2),Math.round(a[2]),Math.round(a[3]),Math.round(a[4])]).sort((a,b)=>a[0]<b[0]?-1:1);
+}
+function buildAge(rows){
+  const r=rows.filter(x=>String(x.account_id)===ACCT_FIN);
+  const male=Array(6).fill(0),female=Array(6).fill(0),leads=Array(6).fill(0),spend=Array(6).fill(0);
+  let gM={leads:0,spend:0},gF={leads:0,spend:0};
+  r.forEach(x=>{const i=AGES.indexOf(x.age); if(i<0)return; const l=N(x.actions_lead),s=N(x.spend);
+    leads[i]+=l; spend[i]+=s;
+    if(x.gender==='male'){male[i]+=l; gM.leads+=l; gM.spend+=s;}
+    else if(x.gender==='female'){female[i]+=l; gF.leads+=l; gF.spend+=s;}});
+  return{male:male.map(Math.round),female:female.map(Math.round),leads:leads.map(Math.round),spend,gM,gF};
+}
+function buildRegion(rows){
+  const r=rows.filter(x=>String(x.account_id)===ACCT_FIN);
+  const by={};
+  r.forEach(x=>{let reg=x.region; if(!reg||reg==='Unknown')return; reg=RMAP[reg]||reg;
+    const l=N(x.actions_onsite_conversion_lead_grouped); if(l<=0)return; by[reg]=(by[reg]||0)+l;});
+  return Object.entries(by).map(([k,v])=>[k,Math.round(v)]).sort((a,b)=>b[1]-a[1]);
+}
+function status(msg,cls){const e=$('refreshStatus'); e.textContent=msg; e.className='rstatus'+(cls?' '+cls:'');}
+let BUSY=false;
+async function refresh(){
+  if(BUSY) return;                                  // evita doble clic
+  BUSY=true;
+  const btn=$('refreshBtn'); btn.disabled=true; btn.classList.add('loading');
+  const t0=Date.now();
+  try{
+    const base=PROXY;
+    const today=new Date().toISOString().slice(0,10);
+    status('Paso 1/3 · histórico 90 días…','work');
+    const d1=await fetchJSON(base+'?date_preset=last_90d&fields=account_id,campaign,date,spend,actions_lead,impressions,clicks');
+    const daily=buildDaily(d1);
+    if(!daily.length) throw new Error('no se encontraron filas de la campaña de formularios');
+    // pinta ya el núcleo aunque falten los desgloses
+    DATA={daily,age:DATA.age,region:DATA.region}; renderDaily(daily);
+    let age=DATA.age, region=DATA.region;
+    status('Paso 2/3 · edad y género…','work');
+    try{const d2=await fetchJSON(base+'?date_from='+CUR+'-01&date_to='+today+'&fields=account_id,age,gender,actions_lead,spend'); age=buildAge(d2);}catch(e){}
+    status('Paso 3/3 · regiones…','work');
+    try{const d3=await fetchJSON(base+'?date_from='+CUR+'-01&date_to='+today+'&fields=account_id,region,actions_onsite_conversion_lead_grouped'); region=buildRegion(d3);}catch(e){}
+    DATA={daily,age,region}; renderAll();
+    const last=daily[daily.length-1][0].split('-');
+    set('dataDate',(+last[2])+'-'+MES[+last[1]-1]+'-'+last[0]);
+    const now=new Date().toLocaleString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    status('✓ Actualizado '+now+' · '+daily.length+' días ('+Math.round((Date.now()-t0)/1000)+'s)','ok');
+  }catch(e){
+    status('✕ '+e.message,'err');
+  }finally{ BUSY=false; btn.disabled=false; btn.classList.remove('loading'); }
+}
+
+// ===================== MODAL API =====================
+function openModal(){$('apiModal').classList.add('open');}
+function closeModal(){$('apiModal').classList.remove('open');}
+$('gearBtn').addEventListener('click',openModal);
+$('apiClose').addEventListener('click',closeModal);
+$('apiModal').addEventListener('click',e=>{if(e.target.id==='apiModal')closeModal();});
+$('modalRefresh').addEventListener('click',()=>{closeModal();refresh();});
+
+// ===================== INIT =====================
+renderAll();
+$('refreshBtn').addEventListener('click',refresh);
+document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  $('tab-'+b.dataset.tab).classList.add('active');
+}));
+</script>
+</body>
+</html>

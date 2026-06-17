@@ -1,0 +1,9 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+# Ruta amigable opcional: /api/windsor -> la función windsor
+[[redirects]]
+  from = "/api/windsor"
+  to = "/.netlify/functions/windsor"
+  status = 200
