@@ -405,7 +405,7 @@ function fillTable(id,rows){
 }
 function renderMonth(ym){
   const s=safeId(ym), rows=monthRows(DATA.daily,ym), a=agg(rows), isCur=(ym===CURDATA);
-  const est=isCur?('mes en curso · '+maxDay(rows)+' días':'mes cerrado');
+  const est=isCur?('mes en curso · '+maxDay(rows)+' días'):'mes cerrado';
   set('est-'+s, rows.length?est:'sin datos aún');
   if(!rows.length){ $('kpi-'+s).className=''; $('kpi-'+s).innerHTML='<div class="note dim" style="grid-column:1/-1">Sin datos todavía para este mes. Dale <b>⟳ Actualizar datos</b> conforme avance el mes.</div>'; $('body-'+s).innerHTML=''; return; }
   $('kpi-'+s).className='row four'; $('kpi-'+s).innerHTML=kpiCards(a,ym);
