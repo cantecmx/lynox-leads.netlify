@@ -235,18 +235,19 @@
     <div class="modal-h"><span>⚙ Conexión Windsor.ai</span><button id="apiClose" class="x" title="Cerrar">✕</button></div>
     <div class="modal-b">
       <h4>Cómo se actualiza</h4>
-      El botón <b>⟳ Actualizar datos</b> pide los datos a una funci&#243;n segura de Netlify (proxy), que consulta Windsor.ai y recalcula KPIs, gráficas, tablas y desgloses. Responde en vivo, así que la primera carga del día puede tardar (si falla, dale clic otra vez).
+      El botón <b>⟳ Actualizar datos</b> consulta Windsor.ai en vivo y recalcula KPIs, gráficas, tablas y desgloses. Responde en vivo, así que la primera carga del día puede tardar (si falla, dale clic otra vez).
       <h4>Endpoint</h4>
-      <code>/.netlify/functions/windsor &#8594; connectors.windsor.ai/facebook</code>
+      <code>https://connectors.windsor.ai/facebook</code>
       <h4>Parámetros</h4>
       <div class="kv"><span>Conector</span><b>facebook (Meta Ads)</b></div>
       <div class="kv"><span>Cuenta</span><b>Financiera Linox · 2089804974913407</b></div>
       <div class="kv"><span>Rango</span><b>desde 01-abr-2026 a hoy</b></div>
       <div class="kv"><span>Métricas</span><b>spend · actions_lead · impresiones · clicks</b></div>
       <div class="kv"><span>Desgloses</span><b>edad · género · región (mes en curso)</b></div>
-      <h4>API key</h4>
-      <div class="kv"><span>Estado</span><b style="color:var(--accent)">&#128274; Protegida en el servidor</b></div>
-      <div class="mnote">La API key <b>no est&#225; en este sitio</b>: vive en una variable de entorno de Netlify y nunca llega al navegador ni al repositorio.</div>
+      <h4>Actualización</h4>
+      <div class="kv"><span>Vía actual</span><b id="modeLabel">—</b></div>
+      <div class="mnote" style="margin-top:10px">Si el botón te falla por lentitud de Windsor, activa el <b>modo directo</b>: pega tu API key y guárdala. Las actualizaciones irán directo (sin el límite de 10s de Netlify) y <b>siempre funcionan</b>. Se guarda <b>solo en este navegador</b>, nunca en el sitio.</div>
+      <div class="keybox" style="margin-top:10px"><input id="keyInput" type="password" placeholder="Pega tu API key de Windsor" style="flex:1;background:var(--bg);border:1px solid var(--line2);color:var(--text);border-radius:6px;padding:6px 10px;font-size:12px;font-family:inherit"><button id="keySave">Guardar</button><button id="keyClear">Borrar</button></div>
       <button class="mbtn" id="modalRefresh">⟳ Actualizar ahora</button>
     </div>
   </div>
@@ -260,7 +261,14 @@
 
 <script>
 // ===================== CONFIG =====================
-function windsorURL(qs){ return '/.netlify/functions/windsor?'+qs; }   // proxy seguro (la key vive en Netlify)
+const API_KEY='';   // en Netlify: sin key en el codigo (proxy o modo directo local)
+const PROXY='/.netlify/functions/windsor';
+function savedKey(){ try{ return localStorage.getItem('lynox_wkey')||''; }catch(e){ return ''; } }
+function buildURL(qs){
+  const k=savedKey()||API_KEY;                            // key guardada (modo directo) o embebida local
+  if(k) return 'https://connectors.windsor.ai/facebook?api_key='+encodeURIComponent(k)+'&'+qs+'&_renderer=json';
+  return PROXY+'?'+qs;                                     // sin key → proxy seguro de Netlify
+}
 const ACCT_FIN='2089804974913407';
 const G='#34d399', Gdim='rgba(52,211,153,.22)', GOLD='#cdb389', GRID='rgba(255,255,255,.06)', MUT='#8a9492';
 const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
@@ -501,7 +509,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function fetchOnce(qs,ms){
   const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),ms);
   try{
-    const r=await fetch(windsorURL(qs),{cache:'no-store',signal:ctrl.signal});
+    const r=await fetch(buildURL(qs),{cache:'no-store',signal:ctrl.signal});
     if(r.status===502||r.status===503||r.status===504) throw new Error('warming '+r.status);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const j=await r.json();
@@ -570,13 +578,16 @@ async function refresh(){
 }
 
 // ===================== MODAL =====================
-let keyShown=false;
 function openModal(){$('apiModal').classList.add('open');}
 function closeModal(){$('apiModal').classList.remove('open');}
-$('gearBtn').addEventListener('click',openModal);
+function refreshMode(){ const has=!!savedKey(); const e=$('modeLabel'); if(e)e.textContent = has?'Directo (key en este navegador) · siempre funciona':(PROXY?'Proxy seguro de Netlify':'Directo (key local)'); }
+$('gearBtn').addEventListener('click',()=>{refreshMode();openModal();});
 $('apiClose').addEventListener('click',closeModal);
 $('apiModal').addEventListener('click',e=>{if(e.target.id==='apiModal')closeModal();});
+if($('keySave'))$('keySave').addEventListener('click',()=>{const v=$('keyInput').value.trim(); if(v){try{localStorage.setItem('lynox_wkey',v);}catch(e){} $('keyInput').value=''; refreshMode(); status('Modo directo activado ✓ · el botón ya no fallará','ok');}});
+if($('keyClear'))$('keyClear').addEventListener('click',()=>{try{localStorage.removeItem('lynox_wkey');}catch(e){} refreshMode(); status('Modo directo desactivado','work');});
 $('modalRefresh').addEventListener('click',()=>{closeModal();refresh();});
+refreshMode();
 
 // ===================== INIT =====================
 renderAll();
