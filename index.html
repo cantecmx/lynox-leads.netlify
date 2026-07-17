@@ -497,19 +497,27 @@ function renderAll(){
 }
 
 // ===================== FETCH WINDSOR =====================
-async function fetchJSON(qs,ms=120000){
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function fetchOnce(qs,ms){
   const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),ms);
   try{
     const r=await fetch(windsorURL(qs),{cache:'no-store',signal:ctrl.signal});
+    if(r.status===502||r.status===503||r.status===504) throw new Error('warming '+r.status);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const j=await r.json();
     const data=j.data||j.result;
-    if(!data) throw new Error('respuesta sin datos');
+    if(!data) throw new Error('sin datos');
     return data;
-  }catch(e){
-    if(e.name==='AbortError') throw new Error('tiempo agotado (>'+Math.round(ms/1000)+'s) · reintenta');
-    throw e;
   }finally{ clearTimeout(t); }
+}
+// Reintenta solo: el 1er intento "despierta" a Windsor, los siguientes ya responden.
+async function fetchJSON(qs,label){
+  const TRIES=6; let last;
+  for(let k=1;k<=TRIES;k++){
+    try{ return await fetchOnce(qs,90000); }
+    catch(e){ last=e; if(k<TRIES){ status((label||'Cargando')+' · Windsor despertando… reintento '+(k+1)+'/'+TRIES,'work'); await sleep(3500); } }
+  }
+  throw last;
 }
 const N=v=>{const x=parseFloat(v); return isNaN(x)?0:x;};
 function buildDaily(rows){
@@ -545,19 +553,19 @@ async function refresh(){
   try{
     const today=new Date().toISOString().slice(0,10);
     status('Paso 1/3 · histórico…','work');
-    const d1=await fetchJSON('date_from=2026-04-01&date_to='+today+'&fields=account_id,campaign,date,spend,actions_lead,impressions,clicks');
+    const d1=await fetchJSON('date_from=2026-04-01&date_to='+today+'&fields=account_id,campaign,date,spend,actions_lead,impressions,clicks','Paso 1/3 · histórico');
     const daily=buildDaily(d1);
     if(!daily.length) throw new Error('sin filas de la campaña de formularios');
     DATA.daily=daily; renderAll();
     const cur=CURDATA;
     status('Paso 2/3 · edad y género…','work');
-    try{const d2=await fetchJSON('date_from='+cur+'-01&date_to='+today+'&fields=account_id,age,gender,actions_lead,spend'); DATA.age=buildAge(d2);}catch(e){}
+    try{const d2=await fetchJSON('date_from='+cur+'-01&date_to='+today+'&fields=account_id,age,gender,actions_lead,spend','Paso 2/3 · edad'); DATA.age=buildAge(d2);}catch(e){}
     status('Paso 3/3 · regiones…','work');
-    try{const d3=await fetchJSON('date_from='+cur+'-01&date_to='+today+'&fields=account_id,region,actions_onsite_conversion_lead_grouped'); DATA.region=buildRegion(d3);}catch(e){}
+    try{const d3=await fetchJSON('date_from='+cur+'-01&date_to='+today+'&fields=account_id,region,actions_onsite_conversion_lead_grouped','Paso 3/3 · regiones'); DATA.region=buildRegion(d3);}catch(e){}
     renderAll();
     const now=new Date().toLocaleString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
     status('✓ Actualizado '+now+' · '+daily.length+' días ('+Math.round((Date.now()-t0)/1000)+'s)','ok');
-  }catch(e){ status('✕ '+e.message,'err'); }
+  }catch(e){ status('No se pudo actualizar ahora (Windsor tardó). Se conservan los últimos datos · intenta de nuevo en un momento.','err'); }
   finally{ BUSY=false; btn.disabled=false; btn.classList.remove('loading'); }
 }
 
