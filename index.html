@@ -83,6 +83,10 @@
   .kpi .sub{color:var(--muted);font-size:12px;margin-top:6px;line-height:1.4}
   .kpi .sub.up{color:var(--good)}
   .kpi .sub.down{color:var(--bad)}
+  .edit{border-bottom:1px dashed var(--line2);cursor:text;outline:none;min-width:24px;display:inline-block;padding:0 2px;transition:border-color .15s,background .15s;border-radius:3px}
+  .edit:hover{border-bottom-color:var(--muted)}
+  .edit:focus{border-bottom-color:var(--accent);background:var(--accent-soft)}
+  .edit:empty::before{content:'—';color:var(--dim)}
   canvas{max-height:330px}
   table{width:100%;border-collapse:collapse;font-size:13px}
   th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line)}
@@ -141,6 +145,7 @@
 <div class="tabs" id="tabsBar">
   <button class="tab-btn active" data-tab="resumen">Resumen</button>
   <!-- meses dinámicos -->
+  <button class="tab-btn" data-tab="ventas" id="ventasBtn">Ventas y Operación</button>
   <button class="tab-btn" data-tab="pilotos" id="pilotosBtn">Pilotos · Mensajes</button>
 </div>
 
@@ -195,6 +200,44 @@
     <span class="t">Lectura ejecutiva</span>
     Lynox tiene una operación de lead-gen <b>madura y predecible</b>: el CPL se mantiene estable en torno a <b id="r-lead-cpl">$20</b> mes a mes, sin descontroles. La migración de mensajes (piloto, ~$28/conversación) a <b>formularios instantáneos</b> fue acertada: mismo presupuesto, ~35% más barato por contacto y mucho más escalable. La palanca de crecimiento ahora es <b>presupuesto</b>, no eficiencia — el costo por lead ya está domado.
   </div>
+</div>
+
+<!-- ============================ VENTAS Y OPERACIÓN ============================ -->
+<div class="tab-content" id="tab-ventas">
+  <div class="note"><span class="t">Cómo llenar estos KPIs</span>Escribe los valores directamente en los recuadros con <b>subrayado punteado</b> (clic y teclea; Enter o clic afuera para guardar). Se guardan solos en este navegador y los indicadores derivados (conversión %, ticket, CAC, ROAS) se calculan automáticamente con los leads e inversión del dashboard. <span id="salesSaved" style="color:var(--accent);font-weight:600"></span></div>
+
+  <div class="sect">Ventas</div>
+  <div class="row four">
+    <div class="kpi"><h3>Ventas · créditos colocados</h3><div class="big"><span class="edit" data-k="ventas"></span></div><div class="sub">del periodo</div></div>
+    <div class="kpi"><h3>Monto colocado (MXN)</h3><div class="big">$<span class="edit" data-k="monto"></span></div><div class="sub">suma de créditos</div></div>
+    <div class="kpi gold"><h3>Ticket promedio</h3><div class="big" id="dv_ticket">—</div><div class="sub">monto ÷ ventas (auto)</div></div>
+    <div class="kpi"><h3>Meta de ventas</h3><div class="big"><span class="edit" data-k="meta"></span></div><div class="sub" id="dv_meta">avance (auto)</div></div>
+  </div>
+
+  <div class="sect">Conversión</div>
+  <div class="row four">
+    <div class="kpi gold"><h3>Conversión Lead → Venta</h3><div class="big" id="dv_convLV">—</div><div class="sub">ventas ÷ leads (auto)</div></div>
+    <div class="kpi"><h3>Leads contactados</h3><div class="big"><span class="edit" data-k="contactados"></span></div><div class="sub">operación</div></div>
+    <div class="kpi"><h3>Contactabilidad</h3><div class="big" id="dv_contact">—</div><div class="sub">contactados ÷ leads (auto)</div></div>
+    <div class="kpi"><h3>Conversión Contacto → Venta</h3><div class="big" id="dv_convCV">—</div><div class="sub">ventas ÷ contactados (auto)</div></div>
+  </div>
+
+  <div class="sect">Operación</div>
+  <div class="row four">
+    <div class="kpi gold"><h3>CAC · costo por venta</h3><div class="big" id="dv_cac">—</div><div class="sub">inversión ÷ ventas (auto)</div></div>
+    <div class="kpi"><h3>ROAS</h3><div class="big" id="dv_roas">—</div><div class="sub">monto ÷ inversión (auto)</div></div>
+    <div class="kpi"><h3>Solicitudes en proceso</h3><div class="big"><span class="edit" data-k="solicitudes"></span></div><div class="sub">pipeline</div></div>
+    <div class="kpi"><h3>Tiempo de respuesta</h3><div class="big" style="font-size:24px"><span class="edit" data-k="tiempo"></span></div><div class="sub">al 1er contacto</div></div>
+  </div>
+
+  <div class="sect">Referencia · adquisición (automático, del dashboard)</div>
+  <div class="row three">
+    <div class="kpi dim"><h3>Leads (formularios)</h3><div class="big" id="dv_leads">—</div><div class="sub">histórico acumulado</div></div>
+    <div class="kpi dim"><h3>Inversión total</h3><div class="big" id="dv_spend">—</div><div class="sub">histórico acumulado</div></div>
+    <div class="kpi dim"><h3>CPL</h3><div class="big" id="dv_cpl">—</div><div class="sub">costo por lead</div></div>
+  </div>
+
+  <div class="note dim" style="margin-top:4px"><span class="t" style="color:var(--muted)">Nota</span>Por ahora los valores de ventas se escriben a mano y se guardan en tu navegador. Cuando tengamos la fuente (CRM, Google Sheet o base de operaciones) los conectamos aquí para que se actualicen solos, igual que los leads.</div>
 </div>
 
 <!-- ============================ PILOTOS ============================ -->
@@ -386,11 +429,11 @@ function breakdownsBlock(){
 }
 function buildTabsAndSections(){
   document.querySelectorAll('.gen').forEach(e=>e.remove());
-  const pil=$('pilotosBtn'), bar=$('tabsBar');
-  ACTIVE.forEach(ym=>bar.insertBefore(tabBtn(ym,false),pil));
-  LOCKED.forEach(ym=>bar.insertBefore(tabBtn(ym,true),pil));
-  const pilSec=$('tab-pilotos'), cont=$('container');
-  ACTIVE.forEach(ym=>cont.insertBefore(monthShell(ym),pilSec));
+  const anchor=$('ventasBtn'), bar=$('tabsBar');
+  ACTIVE.forEach(ym=>bar.insertBefore(tabBtn(ym,false),anchor));
+  LOCKED.forEach(ym=>bar.insertBefore(tabBtn(ym,true),anchor));
+  const secAnchor=$('tab-ventas'), cont=$('container');
+  ACTIVE.forEach(ym=>cont.insertBefore(monthShell(ym),secAnchor));
 }
 
 // ===================== RENDER =====================
@@ -500,8 +543,38 @@ function wireTabs(){
 function renderAll(){
   computeMonths(); buildTabsAndSections();
   renderResumen(); ACTIVE.forEach(renderMonth); wireTabs();
+  computeSales();
   const last=DATA.daily[DATA.daily.length-1][0].split('-');
   set('dataDate',(+last[2])+'-'+MES[+last[1]-1]+'-'+last[0]);
+}
+
+// ===================== KPIs DE VENTAS / OPERACIÓN (editables) =====================
+const SK='lynox_sales_';
+const skGet=k=>{ try{return localStorage.getItem(SK+k)||'';}catch(e){return '';} };
+const skSet=(k,v)=>{ try{localStorage.setItem(SK+k,v);}catch(e){} };
+const pnum=s=>{ const x=parseFloat(String(s).replace(/[^0-9.\-]/g,'')); return isNaN(x)?0:x; };
+function initSales(){
+  document.querySelectorAll('#tab-ventas .edit').forEach(el=>{
+    const k=el.dataset.k, sv=skGet(k); if(sv) el.textContent=sv;
+    if(el._w) return; el._w=true;
+    el.addEventListener('blur',()=>{ skSet(k, el.textContent.trim()); computeSales(); flashSaved(); });
+    el.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); el.blur(); } });
+  });
+  computeSales();
+}
+function flashSaved(){ const e=$('salesSaved'); if(e){ e.textContent='✓ Guardado'; setTimeout(()=>{e.textContent='';},1600); } }
+function computeSales(){
+  if(!$('dv_leads')) return;
+  const t=agg(DATA.daily), leads=t.leads, spend=t.spend;
+  const ventas=pnum(skGet('ventas')), monto=pnum(skGet('monto')), meta=pnum(skGet('meta')), contactados=pnum(skGet('contactados'));
+  set('dv_leads',num(leads)); set('dv_spend',money(spend)); set('dv_cpl','$'+t.cpl.toFixed(2));
+  set('dv_ticket', ventas? money(monto/ventas):'—');
+  set('dv_convLV', (ventas&&leads)? (ventas/leads*100).toFixed(1)+'%':'—');
+  set('dv_contact', (contactados&&leads)? (contactados/leads*100).toFixed(1)+'%':'—');
+  set('dv_convCV', (ventas&&contactados)? (ventas/contactados*100).toFixed(1)+'%':'—');
+  set('dv_cac', ventas? money(spend/ventas):'—');
+  set('dv_roas', (monto&&spend)? (monto/spend).toFixed(2)+'x':'—');
+  set('dv_meta', meta? ('avance '+(ventas/meta*100).toFixed(0)+'% ('+num(ventas)+'/'+num(meta)+')'):'avance (auto)');
 }
 
 // ===================== FETCH WINDSOR =====================
@@ -591,6 +664,7 @@ refreshMode();
 
 // ===================== INIT =====================
 renderAll();
+initSales();
 $('refreshBtn').addEventListener('click',refresh);
 </script>
 </body>
