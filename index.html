@@ -145,7 +145,6 @@
 <div class="tabs" id="tabsBar">
   <button class="tab-btn active" data-tab="resumen">Resumen</button>
   <!-- meses dinámicos -->
-  <button class="tab-btn" data-tab="ventas" id="ventasBtn">Ventas y Operación</button>
   <button class="tab-btn" data-tab="pilotos" id="pilotosBtn">Pilotos · Mensajes</button>
 </div>
 
@@ -200,57 +199,6 @@
     <span class="t">Lectura ejecutiva</span>
     Lynox tiene una operación de lead-gen <b>madura y predecible</b>: el CPL se mantiene estable en torno a <b id="r-lead-cpl">$20</b> mes a mes, sin descontroles. La migración de mensajes (piloto, ~$28/conversación) a <b>formularios instantáneos</b> fue acertada: mismo presupuesto, ~35% más barato por contacto y mucho más escalable. La palanca de crecimiento ahora es <b>presupuesto</b>, no eficiencia — el costo por lead ya está domado.
   </div>
-</div>
-
-<!-- ============================ VENTAS Y OPERACIÓN ============================ -->
-<div class="tab-content" id="tab-ventas">
-  <div class="note"><span class="t">Fuentes de esta pestaña</span>El <b>embudo de seguimiento</b> (abajo) viene del Google Sheet de operaciones "LYNOX Formularios pensionados" — snapshot al <b>19-ago-2026</b>. Los <b>KPIs de ventas cerradas</b> son editables a mano (recuadros con <b>subrayado punteado</b>; clic, teclea y Enter) porque el tracker aún no registra cierres ni monto colocado. <span id="salesSaved" style="color:var(--accent);font-weight:600"></span></div>
-
-  <div class="sect">Embudo de seguimiento · Operaciones (tracker PYMES)</div>
-  <div class="row four">
-    <div class="kpi"><h3>Leads en seguimiento</h3><div class="big" id="seg-total">—</div><div class="sub" id="seg-sub">PYMES · <span id="seg-periodo"></span></div></div>
-    <div class="kpi gold"><h3>En espera de respuesta</h3><div class="big" id="seg-espera">—</div><div class="sub">contactado, sin responder · cuello de botella</div></div>
-    <div class="kpi"><h3>En proceso avanzado</h3><div class="big" id="seg-avance">—</div><div class="sub">registro · oferta · financieras</div></div>
-    <div class="kpi"><h3>Cierres / ventas</h3><div class="big" id="seg-cierres">0</div><div class="sub down">aún sin registrar en el tracker</div></div>
-  </div>
-  <div class="row">
-    <div class="card"><h3>Distribución por estatus (etiquetas de operaciones)</h3><canvas id="segChart"></canvas></div>
-    <div class="card"><h3>Detalle del embudo</h3><table><thead><tr><th>Estatus</th><th class="num">Leads</th><th class="num">%</th></tr></thead><tbody id="segTable"></tbody></table></div>
-  </div>
-  <div class="note"><span class="t">Cómo se mueve operaciones</span><span id="segRead"></span></div>
-
-  <div class="sect">Ventas · cierres (manual · pendiente de operaciones)</div>
-  <div class="row four">
-    <div class="kpi"><h3>Ventas · créditos colocados</h3><div class="big"><span class="edit" data-k="ventas"></span></div><div class="sub">del periodo</div></div>
-    <div class="kpi"><h3>Monto colocado (MXN)</h3><div class="big">$<span class="edit" data-k="monto"></span></div><div class="sub">suma de créditos</div></div>
-    <div class="kpi gold"><h3>Ticket promedio</h3><div class="big" id="dv_ticket">—</div><div class="sub">monto ÷ ventas (auto)</div></div>
-    <div class="kpi"><h3>Meta de ventas</h3><div class="big"><span class="edit" data-k="meta"></span></div><div class="sub" id="dv_meta">avance (auto)</div></div>
-  </div>
-
-  <div class="sect">Conversión</div>
-  <div class="row four">
-    <div class="kpi gold"><h3>Conversión Lead → Venta</h3><div class="big" id="dv_convLV">—</div><div class="sub">ventas ÷ leads (auto)</div></div>
-    <div class="kpi"><h3>Leads contactados</h3><div class="big"><span class="edit" data-k="contactados"></span></div><div class="sub">operación</div></div>
-    <div class="kpi"><h3>Contactabilidad</h3><div class="big" id="dv_contact">—</div><div class="sub">contactados ÷ leads (auto)</div></div>
-    <div class="kpi"><h3>Conversión Contacto → Venta</h3><div class="big" id="dv_convCV">—</div><div class="sub">ventas ÷ contactados (auto)</div></div>
-  </div>
-
-  <div class="sect">Operación</div>
-  <div class="row four">
-    <div class="kpi gold"><h3>CAC · costo por venta</h3><div class="big" id="dv_cac">—</div><div class="sub">inversión ÷ ventas (auto)</div></div>
-    <div class="kpi"><h3>ROAS</h3><div class="big" id="dv_roas">—</div><div class="sub">monto ÷ inversión (auto)</div></div>
-    <div class="kpi"><h3>Solicitudes en proceso</h3><div class="big"><span class="edit" data-k="solicitudes"></span></div><div class="sub">pipeline</div></div>
-    <div class="kpi"><h3>Tiempo de respuesta</h3><div class="big" style="font-size:24px"><span class="edit" data-k="tiempo"></span></div><div class="sub">al 1er contacto</div></div>
-  </div>
-
-  <div class="sect">Referencia · adquisición (automático, del dashboard)</div>
-  <div class="row three">
-    <div class="kpi dim"><h3>Leads (formularios)</h3><div class="big" id="dv_leads">—</div><div class="sub">histórico acumulado</div></div>
-    <div class="kpi dim"><h3>Inversión total</h3><div class="big" id="dv_spend">—</div><div class="sub">histórico acumulado</div></div>
-    <div class="kpi dim"><h3>CPL</h3><div class="big" id="dv_cpl">—</div><div class="sub">costo por lead</div></div>
-  </div>
-
-  <div class="note dim" style="margin-top:4px"><span class="t" style="color:var(--muted)">Nota · automatización</span>El embudo es un <b>snapshot manual</b> del Google Sheet de operaciones (al 19-ago). Para que se actualice solo — y para poder medir <b>conversión a venta real</b> — hacen falta dos cosas: (1) que operaciones registre en el sheet una etiqueta de <b>venta/colocado con monto</b>, y (2) conectar el Google Sheet en vivo al dashboard (se puede, igual que Windsor). Avísame cuando quieras que lo automaticemos.</div>
 </div>
 
 <!-- ============================ PILOTOS ============================ -->
@@ -317,7 +265,7 @@
 
 <script>
 // ===================== CONFIG =====================
-const API_KEY='';   // en Netlify: sin key en el codigo (proxy o modo directo local)
+const API_KEY='';
 const PROXY='/.netlify/functions/windsor';
 function savedKey(){ try{ return localStorage.getItem('lynox_wkey')||''; }catch(e){ return ''; } }
 function buildURL(qs){
@@ -430,6 +378,7 @@ function monthBody(ym){
   if(isCur) h+=breakdownsBlock();
   h+='<details class="card" style="padding:0"><summary style="padding:18px 20px;cursor:pointer;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600;display:flex;justify-content:space-between;align-items:center"><span>Tabla diaria (clic para desplegar)</span><span style="color:var(--accent)">▾</span></summary>'+
     '<div style="padding:0 20px 18px;overflow-x:auto"><table id="tb-'+s+'"><thead><tr><th>Fecha</th><th class="num">Inversión</th><th class="num">Leads</th><th class="num">CPL</th><th class="num">Impr.</th><th class="num">Clicks</th></tr></thead><tbody></tbody></table></div></details>';
+  h+=segBlockHTML(ym)+salesBlockHTML(ym);
   return h;
 }
 function breakdownsBlock(){
@@ -444,10 +393,10 @@ function breakdownsBlock(){
 }
 function buildTabsAndSections(){
   document.querySelectorAll('.gen').forEach(e=>e.remove());
-  const anchor=$('ventasBtn'), bar=$('tabsBar');
+  const anchor=$('pilotosBtn'), bar=$('tabsBar');
   ACTIVE.forEach(ym=>bar.insertBefore(tabBtn(ym,false),anchor));
   LOCKED.forEach(ym=>bar.insertBefore(tabBtn(ym,true),anchor));
-  const secAnchor=$('tab-ventas'), cont=$('container');
+  const secAnchor=$('tab-pilotos'), cont=$('container');
   ACTIVE.forEach(ym=>cont.insertBefore(monthShell(ym),secAnchor));
 }
 
@@ -477,6 +426,7 @@ function renderMonth(ym){
   $('kpi-'+s).className='row four'; $('kpi-'+s).innerHTML=kpiCards(a,ym);
   $('body-'+s).innerHTML=monthBody(ym);
   comboChart('ev-'+s,rows); cplLeadsChart('cl-'+s,rows); fillTable('tb-'+s,rows);
+  renderMonthPanels(ym);
   if(isCur) renderBreakdowns();
 }
 function renderBreakdowns(){
@@ -568,69 +518,84 @@ function renderAll(){
   const prev=(document.querySelector('.tab-btn.active')||{}).dataset ? document.querySelector('.tab-btn.active').dataset.tab : null;
   computeMonths(); buildTabsAndSections();
   renderResumen(); ACTIVE.forEach(renderMonth); wireTabs();
-  computeSales(); renderSeg();
   activateTab(firstLoad ? CURDATA : (prev||CURDATA));   // primera carga → abre en el mes en curso
   firstLoad=false;
   const last=DATA.daily[DATA.daily.length-1][0].split('-');
   set('dataDate',(+last[2])+'-'+MES[+last[1]-1]+'-'+last[0]);
 }
 
-// ===================== KPIs DE VENTAS / OPERACIÓN (editables) =====================
-const SK='lynox_sales_';
-const skGet=k=>{ try{return localStorage.getItem(SK+k)||'';}catch(e){return '';} };
-const skSet=(k,v)=>{ try{localStorage.setItem(SK+k,v);}catch(e){} };
-const pnum=s=>{ const x=parseFloat(String(s).replace(/[^0-9.\-]/g,'')); return isNaN(x)?0:x; };
-function initSales(){
-  document.querySelectorAll('#tab-ventas .edit').forEach(el=>{
-    const k=el.dataset.k, sv=skGet(k); if(sv) el.textContent=sv;
-    if(el._w) return; el._w=true;
-    el.addEventListener('blur',()=>{ skSet(k, el.textContent.trim()); computeSales(); flashSaved(); });
-    el.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); el.blur(); } });
-  });
-  computeSales();
-}
-function flashSaved(){ const e=$('salesSaved'); if(e){ e.textContent='✓ Guardado'; setTimeout(()=>{e.textContent='';},1600); } }
-function computeSales(){
-  if(!$('dv_leads')) return;
-  const t=agg(DATA.daily), leads=t.leads, spend=t.spend;
-  const ventas=pnum(skGet('ventas')), monto=pnum(skGet('monto')), meta=pnum(skGet('meta')), contactados=pnum(skGet('contactados'));
-  set('dv_leads',num(leads)); set('dv_spend',money(spend)); set('dv_cpl','$'+t.cpl.toFixed(2));
-  set('dv_ticket', ventas? money(monto/ventas):'—');
-  set('dv_convLV', (ventas&&leads)? (ventas/leads*100).toFixed(1)+'%':'—');
-  set('dv_contact', (contactados&&leads)? (contactados/leads*100).toFixed(1)+'%':'—');
-  set('dv_convCV', (ventas&&contactados)? (ventas/contactados*100).toFixed(1)+'%':'—');
-  set('dv_cac', ventas? money(spend/ventas):'—');
-  set('dv_roas', (monto&&spend)? (monto/spend).toFixed(2)+'x':'—');
-  set('dv_meta', meta? ('avance '+(ventas/meta*100).toFixed(0)+'% ('+num(ventas)+'/'+num(meta)+')'):'avance (auto)');
-}
-
-// ---- Embudo de seguimiento · snapshot del Google Sheet de operaciones (PYMES, al 19-ago-2026) ----
-const SEG={
-  periodo:'5-may → 17-jul',
-  status:[
-    ['En espera de respuesta (contactado)',163],
-    ['En espera de registro',20],
-    ['Descalificado · sin CIEC',12],
-    ['Perdido · rechazo/declinó',5],
-    ['En espera de oferta',4],
-    ['Enviado a financieras',1],
-    ['Sin seguimiento',1]
-  ]
+// ===================== VENTAS Y SEGUIMIENTO POR MES =====================
+// Embudo por mes de creación del lead · Google Sheet de operaciones (PYMES · snapshot 19-ago-2026)
+const SEG_BY_MONTH={
+  '2026-05':{espera:57,registro:9,oferta:4,financieras:0,descal:12,perdido:3,sin:0},
+  '2026-06':{espera:71,registro:11,oferta:0,financieras:0,descal:0,perdido:0,sin:0},
+  '2026-07':{espera:36,registro:0,oferta:0,financieras:0,descal:0,perdido:2,sin:1}
 };
-function renderSeg(){
-  if(!$('segChart')) return;
-  const st=SEG.status, total=st.reduce((a,b)=>a+b[1],0);
-  const find=p=>{ const r=st.find(x=>x[0].indexOf(p)===0); return r?r[1]:0; };
-  const espera=find('En espera de respuesta');
-  const avance=find('En espera de registro')+find('En espera de oferta')+find('Enviado a financieras');
-  const descal=find('Descalificado'), perdido=find('Perdido');
-  set('seg-total',num(total)); set('seg-periodo',SEG.periodo);
-  set('seg-espera',espera+' · '+(espera/total*100).toFixed(0)+'%');
-  set('seg-avance',avance+' · '+(avance/total*100).toFixed(0)+'%');
-  mk('segChart',{type:'bar',data:{labels:st.map(x=>x[0]),datasets:[{label:'Leads',data:st.map(x=>x[1]),backgroundColor:Gdim,borderColor:G,borderWidth:1,borderRadius:3}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:GRID},title:{display:true,text:'Leads'}},y:{grid:{display:false}}}}});
-  const tb=$('segTable'); if(tb){tb.innerHTML=''; st.forEach(x=>{const tr=document.createElement('tr'); tr.innerHTML='<td>'+x[0]+'</td><td class="num"><b>'+x[1]+'</b></td><td class="num">'+(x[1]/total*100).toFixed(0)+'%</td>'; tb.appendChild(tr);});}
-  const rd=$('segRead'); if(rd)rd.innerHTML='El <b>'+(espera/total*100).toFixed(0)+'% de los leads PYMES ('+espera+' de '+total+')</b> se quedó en "se mandó mensaje / en espera de respuesta" — el cuello de botella es la <b>falta de respuesta tras el primer contacto</b>. Solo <b>'+avance+' ('+(avance/total*100).toFixed(0)+'%)</b> avanzaron a registro/oferta/financieras; <b>'+descal+'</b> se descalificaron (sin CIEC) y <b>'+perdido+'</b> se perdieron. <b>Cero cierres registrados</b>: el tracker aún no captura ventas ni monto colocado. Para medir conversión real, operaciones debe marcar en el sheet una etiqueta de "VENTA / COLOCADO $monto".';
+const SK='lynox_sales_';
+const skGet=(ym,k)=>{ try{return localStorage.getItem(SK+ym+'_'+k)||'';}catch(e){return '';} };
+const skSet=(ym,k,v)=>{ try{localStorage.setItem(SK+ym+'_'+k,v);}catch(e){} };
+const pnum=s=>{ const x=parseFloat(String(s).replace(/[^0-9.\-]/g,'')); return isNaN(x)?0:x; };
+const mesN=ym=>MESL[+ym.slice(5,7)-1];
+function segBlockHTML(ym){
+  const s=safeId(ym), d=SEG_BY_MONTH[ym];
+  let h='<div class="sect">Seguimiento de operaciones · '+mesN(ym)+' (tracker PYMES)</div>';
+  if(!d) return h+'<div class="note dim"><span class="t" style="color:var(--muted)">Sin registro aún</span>El tracker de operaciones (Google Sheet PYMES) todavía no captura el seguimiento de los leads creados en '+mesN(ym)+'. Su rango actual llega a jul-2026; en cuanto operaciones lo trabaje aparece aquí.</div>';
+  return h+
+   '<div class="row four">'+
+    '<div class="kpi"><h3>Leads en seguimiento</h3><div class="big" id="sg-total-'+s+'">—</div><div class="sub">creados en '+mesN(ym)+'</div></div>'+
+    '<div class="kpi gold"><h3>En espera de respuesta</h3><div class="big" id="sg-espera-'+s+'">—</div><div class="sub">contactado, sin responder</div></div>'+
+    '<div class="kpi"><h3>En proceso avanzado</h3><div class="big" id="sg-avance-'+s+'">—</div><div class="sub">registro · oferta · financieras</div></div>'+
+    '<div class="kpi"><h3>Descalif. / perdidos</h3><div class="big" id="sg-lost-'+s+'">—</div><div class="sub">sin CIEC · rechazo · declinó</div></div>'+
+   '</div>'+
+   '<div class="row"><div class="card"><h3>Distribución por estatus</h3><canvas id="sgChart-'+s+'"></canvas></div>'+
+    '<div class="card"><h3>Detalle del embudo</h3><table><thead><tr><th>Estatus</th><th class="num">Leads</th><th class="num">%</th></tr></thead><tbody id="sgTable-'+s+'"></tbody></table>'+
+    '<div style="margin-top:10px;font-size:12px;color:var(--muted)" id="sgRead-'+s+'"></div></div></div>';
+}
+function salesBlockHTML(ym){
+  const nm=mesN(ym);
+  return '<div class="sect">Ventas · cierres de '+nm+' (captura manual)</div>'+
+   '<div class="note dim" style="margin-top:-2px"><span class="t" style="color:var(--muted)">Nota</span>Escribe los cierres de <b>'+nm+'</b> en los recuadros punteados (clic, teclea, Enter). Se guardan por mes en tu navegador. Ticket, conversión, CAC y ROAS se calculan con los leads e inversión de '+nm+'. <span class="sv-saved" data-m="'+ym+'" style="color:var(--accent);font-weight:600"></span></div>'+
+   '<div class="row four">'+
+    '<div class="kpi"><h3>Ventas · créditos colocados</h3><div class="big"><span class="edit" data-m="'+ym+'" data-k="ventas"></span></div></div>'+
+    '<div class="kpi"><h3>Monto colocado (MXN)</h3><div class="big">$<span class="edit" data-m="'+ym+'" data-k="monto"></span></div></div>'+
+    '<div class="kpi gold"><h3>Ticket promedio</h3><div class="big" data-dv="ticket">—</div><div class="sub">monto ÷ ventas</div></div>'+
+    '<div class="kpi"><h3>Leads contactados</h3><div class="big"><span class="edit" data-m="'+ym+'" data-k="contactados"></span></div></div>'+
+   '</div>'+
+   '<div class="row four">'+
+    '<div class="kpi gold"><h3>Conversión Lead → Venta</h3><div class="big" data-dv="convLV">—</div><div class="sub">ventas ÷ leads del mes</div></div>'+
+    '<div class="kpi"><h3>Contactabilidad</h3><div class="big" data-dv="contact">—</div><div class="sub">contactados ÷ leads</div></div>'+
+    '<div class="kpi gold"><h3>CAC · costo por venta</h3><div class="big" data-dv="cac">—</div><div class="sub">inversión ÷ ventas</div></div>'+
+    '<div class="kpi"><h3>ROAS</h3><div class="big" data-dv="roas">—</div><div class="sub">monto ÷ inversión</div></div>'+
+   '</div>';
+}
+function renderMonthPanels(ym){
+  const s=safeId(ym), a=agg(monthRows(DATA.daily,ym));
+  const setdv=(k,v)=>{const e=document.querySelector('#tab-'+ym+' [data-dv="'+k+'"]'); if(e)e.textContent=v;};
+  const ventas=pnum(skGet(ym,'ventas')), monto=pnum(skGet(ym,'monto')), contactados=pnum(skGet(ym,'contactados'));
+  setdv('ticket', ventas? money(monto/ventas):'—');
+  setdv('convLV',(ventas&&a.leads)?(ventas/a.leads*100).toFixed(1)+'%':'—');
+  setdv('contact',(contactados&&a.leads)?(contactados/a.leads*100).toFixed(1)+'%':'—');
+  setdv('cac', ventas? money(a.spend/ventas):'—');
+  setdv('roas',(monto&&a.spend)?(monto/a.spend).toFixed(2)+'x':'—');
+  const d=SEG_BY_MONTH[ym];
+  if(d){
+    const total=(d.espera+d.registro+d.oferta+d.financieras+d.descal+d.perdido+d.sin)||1;
+    const avance=d.registro+d.oferta+d.financieras, lost=d.descal+d.perdido;
+    set('sg-total-'+s,num(total));
+    set('sg-espera-'+s,d.espera+' · '+(d.espera/total*100).toFixed(0)+'%');
+    set('sg-avance-'+s,avance+' · '+(avance/total*100).toFixed(0)+'%');
+    set('sg-lost-'+s,lost+' · '+(lost/total*100).toFixed(0)+'%');
+    const rows=[['En espera de respuesta',d.espera],['En espera de registro',d.registro],['En espera de oferta',d.oferta],['Enviado a financieras',d.financieras],['Descalificado (sin CIEC)',d.descal],['Perdido (rechazo/declinó)',d.perdido],['Sin seguimiento',d.sin]].filter(r=>r[1]>0);
+    mk('sgChart-'+s,{type:'bar',data:{labels:rows.map(r=>r[0]),datasets:[{data:rows.map(r=>r[1]),backgroundColor:Gdim,borderColor:G,borderWidth:1,borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:GRID},title:{display:true,text:'Leads'}},y:{grid:{display:false}}}}});
+    const tb=$('sgTable-'+s); if(tb){tb.innerHTML=''; rows.forEach(r=>{const tr=document.createElement('tr'); tr.innerHTML='<td>'+r[0]+'</td><td class="num"><b>'+r[1]+'</b></td><td class="num">'+(r[1]/total*100).toFixed(0)+'%</td>'; tb.appendChild(tr);});}
+    const rd=$('sgRead-'+s); if(rd)rd.innerHTML='De los <b>'+total+' leads PYMES de '+mesN(ym)+'</b>, el <b>'+(d.espera/total*100).toFixed(0)+'%</b> sigue en espera de respuesta tras el primer contacto. <b>'+avance+'</b> avanzaron (registro/oferta) y <b>'+lost+'</b> se perdieron o descalificaron. Cierres registrados: <b>0</b>.';
+  }
+  document.querySelectorAll('#tab-'+ym+' .edit').forEach(el=>{
+    const k=el.dataset.k, m=el.dataset.m, sv=skGet(m,k); if(sv) el.textContent=sv;
+    if(el._w) return; el._w=true;
+    el.addEventListener('blur',()=>{ skSet(m,k,el.textContent.trim()); renderMonthPanels(m); const e=document.querySelector('#tab-'+m+' .sv-saved'); if(e){e.textContent='✓ Guardado';setTimeout(()=>{e.textContent='';},1500);} });
+    el.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault(); el.blur();} });
+  });
 }
 
 // ===================== FETCH WINDSOR =====================
@@ -720,7 +685,6 @@ refreshMode();
 
 // ===================== INIT =====================
 renderAll();
-initSales();
 $('refreshBtn').addEventListener('click',refresh);
 </script>
 </body>
