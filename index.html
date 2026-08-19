@@ -204,9 +204,22 @@
 
 <!-- ============================ VENTAS Y OPERACIÓN ============================ -->
 <div class="tab-content" id="tab-ventas">
-  <div class="note"><span class="t">Cómo llenar estos KPIs</span>Escribe los valores directamente en los recuadros con <b>subrayado punteado</b> (clic y teclea; Enter o clic afuera para guardar). Se guardan solos en este navegador y los indicadores derivados (conversión %, ticket, CAC, ROAS) se calculan automáticamente con los leads e inversión del dashboard. <span id="salesSaved" style="color:var(--accent);font-weight:600"></span></div>
+  <div class="note"><span class="t">Fuentes de esta pestaña</span>El <b>embudo de seguimiento</b> (abajo) viene del Google Sheet de operaciones "LYNOX Formularios pensionados" — snapshot al <b>19-ago-2026</b>. Los <b>KPIs de ventas cerradas</b> son editables a mano (recuadros con <b>subrayado punteado</b>; clic, teclea y Enter) porque el tracker aún no registra cierres ni monto colocado. <span id="salesSaved" style="color:var(--accent);font-weight:600"></span></div>
 
-  <div class="sect">Ventas</div>
+  <div class="sect">Embudo de seguimiento · Operaciones (tracker PYMES)</div>
+  <div class="row four">
+    <div class="kpi"><h3>Leads en seguimiento</h3><div class="big" id="seg-total">—</div><div class="sub" id="seg-sub">PYMES · <span id="seg-periodo"></span></div></div>
+    <div class="kpi gold"><h3>En espera de respuesta</h3><div class="big" id="seg-espera">—</div><div class="sub">contactado, sin responder · cuello de botella</div></div>
+    <div class="kpi"><h3>En proceso avanzado</h3><div class="big" id="seg-avance">—</div><div class="sub">registro · oferta · financieras</div></div>
+    <div class="kpi"><h3>Cierres / ventas</h3><div class="big" id="seg-cierres">0</div><div class="sub down">aún sin registrar en el tracker</div></div>
+  </div>
+  <div class="row">
+    <div class="card"><h3>Distribución por estatus (etiquetas de operaciones)</h3><canvas id="segChart"></canvas></div>
+    <div class="card"><h3>Detalle del embudo</h3><table><thead><tr><th>Estatus</th><th class="num">Leads</th><th class="num">%</th></tr></thead><tbody id="segTable"></tbody></table></div>
+  </div>
+  <div class="note"><span class="t">Cómo se mueve operaciones</span><span id="segRead"></span></div>
+
+  <div class="sect">Ventas · cierres (manual · pendiente de operaciones)</div>
   <div class="row four">
     <div class="kpi"><h3>Ventas · créditos colocados</h3><div class="big"><span class="edit" data-k="ventas"></span></div><div class="sub">del periodo</div></div>
     <div class="kpi"><h3>Monto colocado (MXN)</h3><div class="big">$<span class="edit" data-k="monto"></span></div><div class="sub">suma de créditos</div></div>
@@ -237,7 +250,7 @@
     <div class="kpi dim"><h3>CPL</h3><div class="big" id="dv_cpl">—</div><div class="sub">costo por lead</div></div>
   </div>
 
-  <div class="note dim" style="margin-top:4px"><span class="t" style="color:var(--muted)">Nota</span>Por ahora los valores de ventas se escriben a mano y se guardan en tu navegador. Cuando tengamos la fuente (CRM, Google Sheet o base de operaciones) los conectamos aquí para que se actualicen solos, igual que los leads.</div>
+  <div class="note dim" style="margin-top:4px"><span class="t" style="color:var(--muted)">Nota · automatización</span>El embudo es un <b>snapshot manual</b> del Google Sheet de operaciones (al 19-ago). Para que se actualice solo — y para poder medir <b>conversión a venta real</b> — hacen falta dos cosas: (1) que operaciones registre en el sheet una etiqueta de <b>venta/colocado con monto</b>, y (2) conectar el Google Sheet en vivo al dashboard (se puede, igual que Windsor). Avísame cuando quieras que lo automaticemos.</div>
 </div>
 
 <!-- ============================ PILOTOS ============================ -->
@@ -555,7 +568,7 @@ function renderAll(){
   const prev=(document.querySelector('.tab-btn.active')||{}).dataset ? document.querySelector('.tab-btn.active').dataset.tab : null;
   computeMonths(); buildTabsAndSections();
   renderResumen(); ACTIVE.forEach(renderMonth); wireTabs();
-  computeSales();
+  computeSales(); renderSeg();
   activateTab(firstLoad ? CURDATA : (prev||CURDATA));   // primera carga → abre en el mes en curso
   firstLoad=false;
   const last=DATA.daily[DATA.daily.length-1][0].split('-');
@@ -589,6 +602,35 @@ function computeSales(){
   set('dv_cac', ventas? money(spend/ventas):'—');
   set('dv_roas', (monto&&spend)? (monto/spend).toFixed(2)+'x':'—');
   set('dv_meta', meta? ('avance '+(ventas/meta*100).toFixed(0)+'% ('+num(ventas)+'/'+num(meta)+')'):'avance (auto)');
+}
+
+// ---- Embudo de seguimiento · snapshot del Google Sheet de operaciones (PYMES, al 19-ago-2026) ----
+const SEG={
+  periodo:'5-may → 17-jul',
+  status:[
+    ['En espera de respuesta (contactado)',163],
+    ['En espera de registro',20],
+    ['Descalificado · sin CIEC',12],
+    ['Perdido · rechazo/declinó',5],
+    ['En espera de oferta',4],
+    ['Enviado a financieras',1],
+    ['Sin seguimiento',1]
+  ]
+};
+function renderSeg(){
+  if(!$('segChart')) return;
+  const st=SEG.status, total=st.reduce((a,b)=>a+b[1],0);
+  const find=p=>{ const r=st.find(x=>x[0].indexOf(p)===0); return r?r[1]:0; };
+  const espera=find('En espera de respuesta');
+  const avance=find('En espera de registro')+find('En espera de oferta')+find('Enviado a financieras');
+  const descal=find('Descalificado'), perdido=find('Perdido');
+  set('seg-total',num(total)); set('seg-periodo',SEG.periodo);
+  set('seg-espera',espera+' · '+(espera/total*100).toFixed(0)+'%');
+  set('seg-avance',avance+' · '+(avance/total*100).toFixed(0)+'%');
+  mk('segChart',{type:'bar',data:{labels:st.map(x=>x[0]),datasets:[{label:'Leads',data:st.map(x=>x[1]),backgroundColor:Gdim,borderColor:G,borderWidth:1,borderRadius:3}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:GRID},title:{display:true,text:'Leads'}},y:{grid:{display:false}}}}});
+  const tb=$('segTable'); if(tb){tb.innerHTML=''; st.forEach(x=>{const tr=document.createElement('tr'); tr.innerHTML='<td>'+x[0]+'</td><td class="num"><b>'+x[1]+'</b></td><td class="num">'+(x[1]/total*100).toFixed(0)+'%</td>'; tb.appendChild(tr);});}
+  const rd=$('segRead'); if(rd)rd.innerHTML='El <b>'+(espera/total*100).toFixed(0)+'% de los leads PYMES ('+espera+' de '+total+')</b> se quedó en "se mandó mensaje / en espera de respuesta" — el cuello de botella es la <b>falta de respuesta tras el primer contacto</b>. Solo <b>'+avance+' ('+(avance/total*100).toFixed(0)+'%)</b> avanzaron a registro/oferta/financieras; <b>'+descal+'</b> se descalificaron (sin CIEC) y <b>'+perdido+'</b> se perdieron. <b>Cero cierres registrados</b>: el tracker aún no captura ventas ni monto colocado. Para medir conversión real, operaciones debe marcar en el sheet una etiqueta de "VENTA / COLOCADO $monto".';
 }
 
 // ===================== FETCH WINDSOR =====================
