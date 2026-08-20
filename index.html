@@ -529,14 +529,14 @@ function renderAll(){
 // ===================== SEGUIMIENTO POR MES · columna S del tracker (Google Sheet) =====================
 // Categorías tipificadas (columna S · hoja "Formulario Pensionado-copy"), por mes de creación · snapshot 20-ago-2026
 const SEG_BY_MONTH={
-  '2026-04':{gest:0,nogest:5,nocont:2,noint:3,venta:0,otro:1},
-  '2026-05':{gest:110,nogest:178,nocont:5,noint:18,venta:0,otro:0},
-  '2026-06':{gest:190,nogest:181,nocont:8,noint:3,venta:3,otro:1},
-  '2026-07':{gest:188,nogest:299,nocont:18,noint:2,venta:0,otro:3},
-  '2026-08':{gest:241,nogest:254,nocont:21,noint:10,venta:3,otro:1}
+  '2026-04':{gest:0,nogest:7,noint:3,venta:0,otro:1},
+  '2026-05':{gest:133,nogest:160,noint:18,venta:0,otro:0},
+  '2026-06':{gest:203,nogest:176,noint:3,venta:3,otro:1},
+  '2026-07':{gest:198,nogest:307,noint:2,venta:0,otro:3},
+  '2026-08':{gest:253,nogest:263,noint:10,venta:3,otro:1}
 };
 const mesN=ym=>MESL[+ym.slice(5,7)-1];
-const BK=[['gest','Gestionable · en proceso',G],['nogest','No gestionable (sin convenio / buró)','#e57373'],['nocont','No contactable','#e0b15e'],['noint','No interesado','#8a9492'],['venta','Venta / Aprobado','#5eead4'],['otro','Sin tipificar / otro','#5e6866']];
+const BK=[['gest','Gestionable · en proceso (incl. buró)',G],['nogest','No gestionable (sin convenio / no contactable)','#e57373'],['noint','No interesado','#8a9492'],['venta','Venta / Aprobado','#5eead4'],['otro','Sin tipificar / otro','#5e6866']];
 function segBlockHTML(ym){
   const s=safeId(ym), d=SEG_BY_MONTH[ym];
   let h='<div class="sect">Ventas y seguimiento · '+mesN(ym)+' (tracker operaciones · columna S)</div>';
@@ -544,12 +544,11 @@ function segBlockHTML(ym){
   return h+
    '<div class="row four">'+
     '<div class="kpi"><h3>Leads en tracker</h3><div class="big" id="sg-total-'+s+'">—</div><div class="sub">tipificados en '+mesN(ym)+'</div></div>'+
-    '<div class="kpi"><h3>Gestionables · en proceso</h3><div class="big" id="sg-gest-'+s+'">—</div><div class="sub">se están trabajando</div></div>'+
-    '<div class="kpi bad"><h3>No gestionables</h3><div class="big" id="sg-nogest-'+s+'">—</div><div class="sub">sin convenio · buró · sin capacidad</div></div>'+
+    '<div class="kpi"><h3>Gestionables · en proceso</h3><div class="big" id="sg-gest-'+s+'">—</div><div class="sub">se trabajan · incluye buró</div></div>'+
+    '<div class="kpi bad"><h3>No gestionables</h3><div class="big" id="sg-nogest-'+s+'">—</div><div class="sub">sin convenio · no contactable · sin capacidad</div></div>'+
     '<div class="kpi gold"><h3>Venta / Aprobado</h3><div class="big" id="sg-venta-'+s+'">—</div><div class="sub">créditos aprobados</div></div>'+
    '</div>'+
-   '<div class="row four">'+
-    '<div class="kpi warn"><h3>No contactable</h3><div class="big" id="sg-nocont-'+s+'">—</div><div class="sub">no contesta · sin whatsapp</div></div>'+
+   '<div class="row three">'+
     '<div class="kpi"><h3>No interesado</h3><div class="big" id="sg-noint-'+s+'">—</div><div class="sub">declinó / no le interesa</div></div>'+
     '<div class="kpi"><h3>Tasa gestionable</h3><div class="big" id="sg-tg-'+s+'">—</div><div class="sub">gestionables ÷ total</div></div>'+
     '<div class="kpi gold"><h3>Conversión a venta</h3><div class="big" id="sg-cv-'+s+'">—</div><div class="sub">venta ÷ total leads</div></div>'+
@@ -560,20 +559,19 @@ function segBlockHTML(ym){
 }
 function renderMonthPanels(ym){
   const s=safeId(ym), d=SEG_BY_MONTH[ym]; if(!d) return;
-  const total=(d.gest+d.nogest+d.nocont+d.noint+d.venta+d.otro)||1;
+  const total=(d.gest+d.nogest+d.noint+d.venta+d.otro)||1;
   const pct=n=>(n/total*100).toFixed(0)+'%';
   set('sg-total-'+s,num(total));
   set('sg-gest-'+s,num(d.gest)+' · '+pct(d.gest));
   set('sg-nogest-'+s,num(d.nogest)+' · '+pct(d.nogest));
   set('sg-venta-'+s,num(d.venta));
-  set('sg-nocont-'+s,num(d.nocont)+' · '+pct(d.nocont));
   set('sg-noint-'+s,num(d.noint)+' · '+pct(d.noint));
   set('sg-tg-'+s,pct(d.gest));
   set('sg-cv-'+s,(d.venta/total*100).toFixed(1)+'%');
   const rows=BK.map(b=>[b[1],d[b[0]],b[2]]).filter(r=>r[1]>0);
   mk('sgChart-'+s,{type:'bar',data:{labels:rows.map(r=>r[0]),datasets:[{data:rows.map(r=>r[1]),backgroundColor:rows.map(r=>r[2]),borderWidth:0,borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:GRID},title:{display:true,text:'Leads'}},y:{grid:{display:false}}}}});
   const tb=$('sgTable-'+s); if(tb){tb.innerHTML=''; rows.forEach(r=>{const tr=document.createElement('tr'); tr.innerHTML='<td>'+r[0]+'</td><td class="num"><b>'+r[1]+'</b></td><td class="num">'+(r[1]/total*100).toFixed(0)+'%</td>'; tb.appendChild(tr);});}
-  const rd=$('sgRead-'+s); if(rd)rd.innerHTML='De los <b>'+num(total)+' leads de '+mesN(ym)+'</b>: <b>'+pct(d.nogest)+' no gestionables</b> (casi todos <i>sin convenio</i> — su institución de pensión no tiene convenio con la financiera), <b>'+pct(d.gest)+' en proceso</b> y <b>'+d.venta+' venta(s)/aprobado(s)</b>. El gran filtro es "sin convenio": marca cuántos leads son realmente trabajables.';
+  const rd=$('sgRead-'+s); if(rd)rd.innerHTML='De los <b>'+num(total)+' leads de '+mesN(ym)+'</b>: <b>'+pct(d.gest)+' gestionables</b> (en proceso, incluye buró), <b>'+pct(d.nogest)+' no gestionables</b> (sin convenio + no contactable + sin capacidad) y <b>'+d.venta+' venta(s)/aprobado(s)</b>.';
 }
 
 // ===================== FETCH WINDSOR =====================
